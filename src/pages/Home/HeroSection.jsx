@@ -49,29 +49,29 @@ const HeroSection = () => {
 
   return (
     <>
-      {/* Hero Section with animated background */}
-      <div className="relative shadow-xl w-full h-[600px] md:h-[700px] flex items-center justify-center text-white overflow-hidden">
-        {/* Background image without key re-rendering */}
+      {/* Hero Section */}
+      <div className="relative w-full h-[600px] md:h-[700px] flex items-center justify-center text-white overflow-hidden shadow-xl">
+        {/* Background */}
         <div
           className="absolute inset-0 w-full h-full bg-cover bg-center before:content-[''] before:absolute before:inset-0 before:bg-black/60 transition-opacity duration-1000"
           style={{ backgroundImage: `url(${image_url})` }}
         ></div>
 
-        {/* Navigation buttons */}
+        {/* Navigation */}
         <button
           onClick={prevImage}
-          className="hidden md:flex absolute left-10 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 hover:bg-opacity-75 p-3 rounded-full z-10"
+          className="hidden md:flex absolute left-4 md:left-10 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 hover:bg-opacity-75 p-3 rounded-full z-10"
         >
           <ChevronLeft className="text-white w-6 h-6" />
         </button>
         <button
           onClick={nextImage}
-          className="hidden md:flex absolute right-10 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 hover:bg-opacity-75 p-3 rounded-full z-10"
+          className="hidden md:flex absolute right-4 md:right-10 top-1/2 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 hover:bg-opacity-75 p-3 rounded-full z-10"
         >
           <ChevronRight className="text-white w-6 h-6" />
         </button>
 
-        {/* Text content animation */}
+        {/* Text Content */}
         <motion.div
           className="relative z-10 text-center max-w-4xl mx-auto px-4"
           key={title}
@@ -86,9 +86,26 @@ const HeroSection = () => {
         </motion.div>
       </div>
 
-      {/* Bottom Box Section - stays unaffected by image transition */}
-      <div className="mt-[-150px] flex justify-center items-center relative z-40">
-        <div className="w-[300px] h-[300px] bg-black mx-auto"></div>
+      {/* CTA Section */}
+      <div className="relative z-20 -mt-24 px-4 w-full">
+        <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 md:p-12 mx-auto w-full max-w-6xl border border-gray-100 text-center">
+          <h2 className="text-2xl sm:text-3xl font-bold text-yellow-500 mb-4">
+            Ishani Enterprises
+          </h2>
+          <p className="text-gray-700 mb-6 text-sm sm:text-base">
+            With a focus on innovation, quality, and reliability, Ishani
+            Enterprises offers tailored solutions that drive progress and
+            empower businesses to thrive in a competitive world.
+          </p>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <button className="bg-yellow-500 text-white px-6 py-3 rounded-full hover:bg-yellow-600 transition font-semibold w-full sm:w-auto">
+              View Services
+            </button>
+            <button className="bg-gray-800 text-white px-6 py-3 rounded-full hover:bg-gray-900 transition font-semibold w-full sm:w-auto">
+              Contact Us
+            </button>
+          </div>
+        </div>
       </div>
     </>
   );
