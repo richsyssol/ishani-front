@@ -41,12 +41,16 @@ const Navbar = () => {
       >
         <ContentWrapper>
           <div className="flex space-x-4">
-            <a href="mailto:mail@startuprr.com" className="hover:underline">
-              envocares@gmail.com
+            <a
+              href="mailto:ishanient@gmail.com
+"
+              className="hover:underline"
+            >
+              ishanient@gmail.com
             </a>
             <span className="hidden md:block mx-2">|</span>
             <a href="tel:9403455280" className="hover:underline">
-              +91 9970436943
+              +91 94222 55572
             </a>
           </div>
         </ContentWrapper>
