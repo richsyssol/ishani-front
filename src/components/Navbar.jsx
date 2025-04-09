@@ -48,7 +48,7 @@ const navItems = [
     //   { label: "Map & Directions", path: "/factory-outlet/map" },
     //   { label: "Book a Visit", path: "/factory-outlet/book-visit" },
     // ],
-    path: "/outlet",
+    path: "/factory-outlet",
   },
   {
     label: "FRANCHISE OPPORTUNITY",
@@ -58,7 +58,7 @@ const navItems = [
     //   { label: "Cities Available", path: "/franchise/cities" },
     //   { label: "Apply Now", path: "/franchise/apply" },
     // ],
-    path: "/franchise",
+    path: "/ishani-franchise",
   },
   {
     label: "BLOG",

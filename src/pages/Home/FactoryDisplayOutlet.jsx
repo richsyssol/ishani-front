@@ -107,11 +107,11 @@ const FactoryDisplayOutlet = () => {
                 </div>
 
                 <a
-                  href="tel:+918888888888"
+                  href="tel:+919422255572"
                   className="flex items-center justify-center gap-2 text-gray-700 hover:text-yellow-600 font-medium transition-colors"
                 >
                   <Phone className="w-5 h-5" />
-                  Call: +91 88888 88888
+                  Call: +91 9422255572
                 </a>
               </div>
             </div>
