@@ -1,9 +1,24 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer, zoomIn } from "../../utils/motion";
+import { useLocation } from "react-router-dom";
 
 const AboutUsPage = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace("#", "");
+      const element = document.getElementById(id);
+      if (element) {
+        // Small timeout to ensure component has rendered
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 100);
+      }
+    }
+  }, [location]);
   return (
     <motion.div
       initial="hidden"

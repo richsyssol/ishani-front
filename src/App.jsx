@@ -12,6 +12,9 @@ import FactoryOutletPage from "./pages/FactoryOutlet/FactoryOutlet";
 import FranchiseOpportunity from "./pages/Franchise/FranchiseOpportunity";
 import PageNotFound from "./pages/ErrorPages/NotFound";
 import ProductsPage from "./pages/Products/ProductsPage";
+import ContactUsPage from "./pages/ContactUs/ContactUsPage";
+import ProjectsPage from "./pages/Projects/ProjectsPage";
+import BlogPage from "./pages/Blog/BlogPage";
 
 function App() {
   const router = createBrowserRouter(
@@ -23,6 +26,9 @@ function App() {
         <Route path="/ishani-franchise" element={<FranchiseOpportunity />} />
         <Route path="/products" element={<ProductsPage />} />
         <Route path="/products/:category" element={<ProductsPage />} />
+        <Route path="/contactus" element={<ContactUsPage />} />
+        <Route path="/blog" element={<BlogPage />} />
+        <Route path="/projects" element={<ProjectsPage />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     )
