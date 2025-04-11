@@ -11,6 +11,7 @@ import AboutUsPage from "./pages/AboutUs/AboutUsPage";
 import FactoryOutletPage from "./pages/FactoryOutlet/FactoryOutlet";
 import FranchiseOpportunity from "./pages/Franchise/FranchiseOpportunity";
 import PageNotFound from "./pages/ErrorPages/NotFound";
+import ProductsPage from "./pages/Products/ProductsPage";
 
 function App() {
   const router = createBrowserRouter(
@@ -20,6 +21,8 @@ function App() {
         <Route path="/aboutus" element={<AboutUsPage />} />
         <Route path="/factory-outlet" element={<FactoryOutletPage />} />
         <Route path="/ishani-franchise" element={<FranchiseOpportunity />} />
+        <Route path="/products" element={<ProductsPage />} />
+        <Route path="/products/:category" element={<ProductsPage />} />
         <Route path="*" element={<PageNotFound />} />
       </Route>
     )
