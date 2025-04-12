@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 import { FiFilter, FiChevronDown } from "react-icons/fi";
 
-// Category Icons (replace with your icon library)
+
 const categoryIcons = {
   All: "🌟",
   "uPVC French Doors": "🚪",
@@ -16,132 +17,35 @@ const categoryIcons = {
   "Invisible Grills": "🔳",
 };
 
-// Expanded Product Data (25+ items)
-const products = [
-  // uPVC French Doors (5 items)
-  {
-    id: 1,
-    category: "uPVC French Doors",
-    title: "Classic White uPVC Door",
-    description: "Energy-efficient with multi-point locking",
-    image:
-      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=500&auto=format&fit=crop&q=80",
-    price: "₹12,500",
-  },
-  {
-    id: 2,
-    category: "uPVC French Doors",
-    title: "Woodgrain uPVC Door",
-    description: "Natural wood finish with thermal break",
-    image:
-      "https://images.unsplash.com/photo-1600566752355-35792bedcfe3?w=500&auto=format&fit=crop&q=80",
-    price: "₹14,200",
-  },
-  // Aluminum French Doors (4 items)
-  {
-    id: 3,
-    category: "Aluminum French Doors",
-    title: "Slimline Aluminum Door",
-    description: "Narrow profiles with tempered glass",
-    image:
-      "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=500&auto=format&fit=crop&q=80",
-    price: "₹18,750",
-  },
-  // Sliding/Folding Doors (5 items)
-  {
-    id: 4,
-    category: "Sliding & Folding Doors",
-    title: "Bi-Fold Patio Door",
-    description: "Space-saving folding mechanism",
-    image:
-      "https://images.unsplash.com/photo-1600585152220-90363fe7e115?w=500&auto=format&fit=crop&q=80",
-    price: "₹22,000",
-  },
-  // Custom Designs (3 items)
-  {
-    id: 5,
-    category: "Custom Design Options",
-    title: "Laser-Cut Floral Door",
-    description: "Bespoke patterns in aluminum",
-    image:
-      "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=500&auto=format&fit=crop&q=80",
-    price: "₹28,500",
-  },
-  // Smart Safety Doors (3 items)
-  {
-    id: 6,
-    category: "Smart Safety Doors",
-    title: "Biometric Security Door",
-    description: "Fingerprint + PIN access",
-    image:
-      "https://images.unsplash.com/photo-1601760561441-1642052c7eed?w=500&auto=format&fit=crop&q=80",
-    price: "₹35,000",
-  },
-  // French Windows (3 items)
-  {
-    id: 7,
-    category: "French Windows",
-    title: "Floor-to-Ceiling Window",
-    description: "Panoramic views with uPVC frames",
-    image:
-      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=500&auto=format&fit=crop&q=80",
-    price: "₹9,800/sq.ft",
-  },
-  // Partitions (3 items)
-  {
-    id: 8,
-    category: "Partitions",
-    title: "Laser-Cut Metal Partition",
-    description: "Custom geometric designs",
-    image:
-      "https://images.unsplash.com/photo-1586023492125-27a5d5a5a4d4?w=500&auto=format&fit=crop&q=80",
-    price: "₹6,500/panel",
-  },
-  // Mosquito Nets (3 items)
-  {
-    id: 9,
-    category: "Mosquito Nets",
-    title: "Stainless Steel Roll-Up Net",
-    description: "Durable rust-proof mesh",
-    image:
-      "https://images.unsplash.com/photo-1631217877853-1a068196e613?w=500&auto=format&fit=crop&q=80",
-    price: "₹3,200",
-  },
-  // Invisible Grills (3 items)
-  {
-    id: 10,
-    category: "Invisible Grills",
-    title: "SS304 Tension Grill",
-    description: "High-security with clear view",
-    image:
-      "https://images.unsplash.com/photo-1600566752355-35792bedcfe3?w=500&auto=format&fit=crop&q=80",
-    price: "₹4,800/meter",
-  },
-  // Additional items...
-  {
-    id: 11,
-    category: "uPVC French Doors",
-    title: "Black uPVC French Door",
-    description: "Modern matte black finish",
-    image:
-      "https://images.unsplash.com/photo-1600607688270-b8124e1cf4d5?w=500&auto=format&fit=crop&q=80",
-    price: "₹15,750",
-  },
-  // Add 10+ more items following same structure
-];
-
 const OurProducts = () => {
+  const [products, setProducts] = useState([]);
   const [activeFilter, setActiveFilter] = useState("All");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [loading, setLoading] = useState(true); // loading state
 
-  // Get unique categories
   const categories = Object.keys(categoryIcons);
 
-  // Filter products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get("http://localhost:8000/api/products");
+        setProducts(res.data); // assuming backend returns array of product objects
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching products:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   const filteredProducts =
     activeFilter === "All"
       ? products
       : products.filter((product) => product.category === activeFilter);
+
+  if (loading) return null;
 
   return (
     <section className="bg-white py-16 px-4 sm:px-6 lg:px-8" id="products">

@@ -1,97 +1,54 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 import { ChevronLeft, ChevronRight, Dot, Circle } from "lucide-react";
 
-const galleryImages = [
-  {
-    src: "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1400&auto=format&fit=crop&q=80",
-    alt: "Modern French Doors Installation",
-    category: "French Doors",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=1400&auto=format&fit=crop&q=80",
-    alt: "Luxury Aluminum Windows",
-    category: "Windows",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=1400&auto=format&fit=crop&q=80",
-    alt: "Custom Glass Partitions",
-    category: "Partitions",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1565538810643-b5bdb714032a?w=1400&auto=format&fit=crop&q=80",
-    alt: "Smart Safety Doors",
-    category: "Security",
-  },
-  {
-    src: "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=1400&auto=format&fit=crop&q=80",
-    alt: "Mosquito Net Solutions",
-    category: "Nets",
-  },
-];
-
-const clientTestimonials = [
-  {
-    name: "Rajesh Mehta",
-    project: "Villa French Doors",
-    quote: "Ishani's doors transformed our home's aesthetic completely!",
-    image: "https://randomuser.me/api/portraits/men/32.jpg",
-    rating: 5,
-  },
-  {
-    name: "Priya Sharma",
-    project: "Office Partitions",
-    quote: "Professional installation with excellent after-sales service.",
-    image: "https://randomuser.me/api/portraits/women/44.jpg",
-    rating: 4,
-  },
-  {
-    name: "Amit Patel",
-    project: "Apartment Windows",
-    quote: "Energy efficient windows that reduced our AC bills significantly.",
-    image: "https://randomuser.me/api/portraits/men/75.jpg",
-    rating: 5,
-  },
-  {
-    name: "Neha Gupta",
-    project: "Safety Doors",
-    quote: "The biometric lock gives us complete peace of mind.",
-    image: "https://randomuser.me/api/portraits/women/68.jpg",
-    rating: 5,
-  },
-  {
-    name: "Vikram Singh",
-    project: "Mosquito Nets",
-    quote: "Discreet design that doesn't compromise on functionality.",
-    image: "https://randomuser.me/api/portraits/men/86.jpg",
-    rating: 4,
-  },
-  {
-    name: "Ananya Reddy",
-    project: "Custom Glass Work",
-    quote: "Exactly matched our architect's unique vision.",
-    image: "https://randomuser.me/api/portraits/women/90.jpg",
-    rating: 5,
-  },
-];
 
 const GallerySection = () => {
+  const [galleryImage, setGalleryImage] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentImage, setCurrentImage] = useState(0);
   const [direction, setDirection] = useState(1);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const clientsRef = useRef(null);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [galleryResponse, testimonialsResponse] = await Promise.all([
+          axios.get('http://localhost:8000/api/gallery'),
+          axios.get('http://localhost:8000/api/testimonials')
+        ]);
+      console.log(galleryResponse,testimonialsResponse)
+        setGalleryImage(galleryResponse.data.data.data);
+        setTestimonials(testimonialsResponse.data.data.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading ) {
+    return <div className="h-[600px] flex items-center justify-center text-gray-500">Loading...</div>;
+  }
+  
+
   // Main gallery navigation
   const nextImage = () => {
     setDirection(1);
-    setCurrentImage((prev) => (prev + 1) % galleryImages.length);
+    setCurrentImage((prev) => (prev + 1) % galleryImage?.length);
     setIsAutoPlaying(true);
   };
 
   const prevImage = () => {
     setDirection(-1);
     setCurrentImage(
-      (prev) => (prev - 1 + galleryImages.length) % galleryImages.length
+      (prev) => (prev - 1 + galleryImage.length) % galleryImage.length
     );
     setIsAutoPlaying(true);
   };
@@ -172,8 +129,8 @@ const GallerySection = () => {
                 className="absolute inset-0 w-full h-full"
               >
                 <img
-                  src={galleryImages[currentImage].src}
-                  alt={galleryImages[currentImage].alt}
+                  src={galleryImage[currentImage].src}
+                  alt={galleryImage[currentImage].alt}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
@@ -183,7 +140,7 @@ const GallerySection = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    {galleryImages[currentImage].category}
+                    {galleryImage[currentImage].category}
                   </motion.p>
                   <motion.h3
                     className="text-white text-2xl font-bold"
@@ -191,7 +148,7 @@ const GallerySection = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
                   >
-                    {galleryImages[currentImage].alt}
+                    {galleryImage[currentImage].alt}
                   </motion.h3>
                 </div>
               </motion.div>
@@ -213,7 +170,7 @@ const GallerySection = () => {
             </button>
 
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-              {galleryImages.map((_, index) => (
+              {galleryImage.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => goToImage(index)}
@@ -275,7 +232,7 @@ const GallerySection = () => {
               ref={clientsRef}
               className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth py-4 px-2"
             >
-              {clientTestimonials.map((client, index) => (
+              {testimonials.map((client, index) => (
                 <motion.div
                   key={index}
                   className="min-w-[300px] sm:min-w-[350px] bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100"

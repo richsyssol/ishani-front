@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import axios from "axios";
 import {
   ChevronLeft,
   ChevronRight,
@@ -9,38 +10,26 @@ import {
 } from "lucide-react";
 
 const HeroSection = () => {
-  const heroContent = [
-    {
-      image_url:
-        "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=1400&auto=format&fit=crop&q=80",
-      title: "Premium French Doors & Windows",
-      description: "Crafted with precision for elegance and durability",
-      ctaHighlight: "Limited Time Offer - 15% Off",
-    },
-    {
-      image_url:
-        "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?w=1400&auto=format&fit=crop&q=80",
-      title: "Custom Design Solutions",
-      description: "Tailored to match your architectural vision",
-      ctaHighlight: "Free Design Consultation",
-    },
-    {
-      image_url:
-        "https://images.unsplash.com/photo-1600566752355-35792bedcfe3?w=1400&auto=format&fit=crop&q=80",
-      title: "Smart Safety Doors",
-      description: "Advanced security with sophisticated design",
-      ctaHighlight: "Biometric Lock Upgrade Available",
-    },
-  ];
-
+  const [heroContent, setHeroContent] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    // Fetch hero content from backend
+    axios.get("http://localhost:8000/api/herocontent") // Replace with your actual endpoint
+      .then((res) => {
+        setHeroContent(res.data); // Assuming the data is an array
+      })
+      .catch((err) => {
+        console.error("Error fetching hero content:", err);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!isAutoPlaying || heroContent.length === 0) return;
     const interval = setInterval(nextImage, 5000);
     return () => clearInterval(interval);
-  }, [currentIndex, isAutoPlaying]);
+  }, [currentIndex, isAutoPlaying, heroContent]);
 
   const nextImage = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % heroContent.length);
@@ -51,6 +40,10 @@ const HeroSection = () => {
       (prevIndex) => (prevIndex - 1 + heroContent.length) % heroContent.length
     );
   };
+
+  if (heroContent.length === 0) {
+    return <div className="h-[600px] flex items-center justify-center text-gray-500">Loading...</div>;
+  }
 
   const { image_url, title, description, ctaHighlight } =
     heroContent[currentIndex];

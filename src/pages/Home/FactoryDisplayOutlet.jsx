@@ -1,8 +1,30 @@
 import React from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { MapPin, Calendar, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 
 const FactoryDisplayOutlet = () => {
+
+  const [sectionData, setSectionData] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+    const fetchOutletData = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/api/factoryoutlet');
+        setSectionData(response.data.data);
+      } catch (error) {
+        console.error("Error fetching factoryoutlet:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOutletData();
+  }, []);
+  
   return (
     <section className="bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
@@ -37,13 +59,10 @@ const FactoryDisplayOutlet = () => {
             <div className="p-8 flex flex-col justify-between">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
-                  Visit Our Nashik Display Outlet
+                  {sectionData.header}
                 </h2>
-                <p className="text-gray-600 mb-6">
-                  Experience our premium French doors and windows firsthand at
-                  our factory outlet. Our experts will guide you through our
-                  complete product range.
-                </p>
+                <p className="text-gray-600 mb-6 prose" dangerouslySetInnerHTML={{ __html: sectionData.text_content }}/>
+                  
 
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
@@ -51,13 +70,13 @@ const FactoryDisplayOutlet = () => {
                     <div>
                       <h4 className="font-semibold text-gray-800">Location</h4>
                       <p className="text-gray-600">
-                        Ishani Enterprises
+                      {sectionData.location_line_1}
                         <br />
-                        G-8, Prestige Bytco Business Center,
+                        {sectionData.location_line_2}
                         <br />
-                        Bytco Point, Nasik Road,
+                        {sectionData.location_line_3}
                         <br />
-                        Nasik - 422101
+                        {sectionData.location_line_4}
                       </p>
                     </div>
                   </div>
@@ -80,9 +99,9 @@ const FactoryDisplayOutlet = () => {
                         Opening Hours
                       </h4>
                       <p className="text-gray-600">
-                        Monday-Saturday: 9:30 AM - 7:30 PM
+                        {sectionData.opening_hours_line_1}
                         <br />
-                        Sunday: 10:00 AM - 4:00 PM
+                        {sectionData.opening_hours_line_2}
                       </p>
                     </div>
                   </div>
@@ -111,7 +130,7 @@ const FactoryDisplayOutlet = () => {
                   className="flex items-center justify-center gap-2 text-gray-700 hover:text-yellow-600 font-medium transition-colors"
                 >
                   <Phone className="w-5 h-5" />
-                  Call: +91 9422255572
+                  {sectionData.contact_number}
                 </a>
               </div>
             </div>
