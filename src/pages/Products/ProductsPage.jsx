@@ -45,7 +45,7 @@ const ProductsPage = () => {
   };
 
   return (
-    <section className="bg-white">
+    <section className="bg-white mt-20">
       {/* Main Product Section */}
       <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
@@ -132,40 +132,42 @@ const Breadcrumbs = ({ category, navigate, pathToCategoryMap }) => (
     </nav>
   </div>
 );
-
 // Component: Category Header
-const CategoryHeader = ({ category, activeFilter, pathToCategoryMap }) => (
-  <motion.div
-    className="text-left mb-12"
-    initial={{ opacity: 0, y: -20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.6 }}
-  >
-    <h2 className="text-4xl font-bold text-gray-800 mb-3">
-      {category
-        ? pathToCategoryMap[category] || "Products"
-        : "Premium Door Solutions"}
-    </h2>
+const CategoryHeader = ({ category, activeFilter, pathToCategoryMap }) => {
+  // Safely get the category name
+  const categoryName = category
+    ? pathToCategoryMap[category] || "Products"
+    : "Premium Door Solutions";
+
+  // Safely get the description
+  const description = getCategoryDescription(activeFilter || categoryName);
+
+  // Safely get the stats text
+  const statsText = category
+    ? `Browse our ${categoryName.toLowerCase()} collection - ${getCategoryStats(
+        activeFilter || categoryName
+      )} products available`
+    : "Trusted by 5000+ homeowners across India since 2010";
+
+  return (
     <motion.div
-      className="h-1 w-16 bg-yellow-500 mb-6"
-      initial={{ width: 0 }}
-      animate={{ width: "4rem" }}
-      transition={{ duration: 0.5, delay: 0.3 }}
-    />
-    <p className="text-gray-600 max-w-2xl mb-4">
-      {getCategoryDescription(activeFilter)}
-    </p>
-    <p className="text-gray-500 text-sm">
-      {category
-        ? `Browse our ${pathToCategoryMap[
-            category
-          ].toLowerCase()} collection - ${getCategoryStats(
-            activeFilter
-          )} products available`
-        : "Trusted by 5000+ homeowners across India since 2010"}
-    </p>
-  </motion.div>
-);
+      className="text-left mb-12"
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <h2 className="text-4xl font-bold text-gray-800 mb-3">{categoryName}</h2>
+      <motion.div
+        className="h-1 w-16 bg-yellow-500 mb-6"
+        initial={{ width: 0 }}
+        animate={{ width: "4rem" }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      />
+      <p className="text-gray-600 max-w-2xl mb-4">{description}</p>
+      <p className="text-gray-500 text-sm">{statsText}</p>
+    </motion.div>
+  );
+};
 
 // Component: Category Filters
 const CategoryFilters = ({ pathToCategoryMap, activeFilter, navigate }) => (
