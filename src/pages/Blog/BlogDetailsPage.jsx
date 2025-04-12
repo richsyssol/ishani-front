@@ -85,7 +85,7 @@ const BlogDetailsPage = () => {
       initial="hidden"
       whileInView="show"
       viewport={{ once: true }}
-      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12"
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20"
     >
       {/* SEO Meta (would be handled by React Helmet in real implementation) */}
       <title>{blog.title} | Ishani Enterprises Blog</title>
