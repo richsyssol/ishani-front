@@ -104,7 +104,7 @@ const OurProducts = () => {
             <div className="flex items-center gap-2">
               <FiFilter />
               <span>
-                {activeFilter === "All" ? "All Categories" : activeFilter}
+                {/* {activeFilter === "All" ? "All Categories" : activeFilter} */}
               </span>
             </div>
             <FiChevronDown

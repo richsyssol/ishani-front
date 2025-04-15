@@ -13,6 +13,15 @@ const HeroSection = () => {
   const [heroContent, setHeroContent] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [documents, setDocuments] = useState([]);
+
+
+useEffect(() => {
+        axios.get('http://localhost:8000/api/documents')
+            .then((res) => setDocuments(res.data))
+            .catch((err) => console.error(err));
+    }, []);
+
 
   useEffect(() => {
     // Fetch hero content from backend
@@ -59,7 +68,7 @@ const HeroSection = () => {
         {/* Background Image */}
         <motion.div
           className="absolute inset-0 w-full h-full bg-cover bg-center"
-          style={{ backgroundImage: `url(${image_url})` }}
+          style={{ backgroundImage: `url\(${image_url})` }}
           key={image_url}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

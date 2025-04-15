@@ -1,11 +1,68 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import parse, { domToReact } from "html-react-parser";
+import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer, zoomIn } from "../../utils/motion";
 import { useLocation } from "react-router-dom";
 
+const BulletIcon = () => (
+  <svg
+    className="h-5 w-5 text-yellow-500 mr-2 mt-0.5"
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M5 13l4 4L19 7"
+    />
+  </svg>
+);
+
+const transform = (node) => {
+  if (node.name === 'p') {
+    return (
+      <p className="text-gray-600 mb-4">
+        {domToReact(node.children)}
+      </p>
+    );
+  }
+
+  if (node.name === 'li') {
+    return (
+      <li className="flex items-start text-gray-600 mb-4">
+        <BulletIcon />
+        <span>{domToReact(node.children)}</span>
+      </li>
+    );
+  }
+};
+
 const AboutUsPage = () => {
   const location = useLocation();
+  const [companyData, setCompanyData] = useState(null);
+  const [htmlContent, setHtmlContent] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/api/companyinformation');
+        setCompanyData(response.data);
+        setHtmlContent(response.data.manufacturing_facility_description)
+      } catch (error) {
+        console.error("Error fetching company information:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
 
   useEffect(() => {
     if (location.hash) {
@@ -19,6 +76,11 @@ const AboutUsPage = () => {
       }
     }
   }, [location]);
+
+  if (loading) {
+    return <div className="h-[600px] flex items-center justify-center text-gray-500">Loading...</div>;
+  }
+
   return (
     <motion.div
       initial="hidden"
@@ -77,30 +139,12 @@ const AboutUsPage = () => {
               Company Overview
             </h2>
             <div className="space-y-4 text-gray-600">
-              <p>
-                Founded in 2014, Ishani Enterprises has grown to become a
-                trusted name in premium architectural solutions. Specializing in
-                French doors and windows, what began as a modest operation has
-                blossomed into a thriving business with a reputation for
-                craftsmanship and reliability.
-              </p>
-              <p>
-                With our headquarters in Delhi NCR, we've expanded our reach
-                across Northern India, serving hundreds of satisfied clients
-                including architects, builders, and homeowners. Our journey has
-                been marked by steady growth, innovation, and an unwavering
-                commitment to excellence.
-              </p>
-              <p>
-                Today, we stand as a leading manufacturer with 50+ employees,
-                state-of-the-art manufacturing facilities, and a distribution
-                network that ensures timely delivery of our premium products.
-              </p>
+              <p dangerouslySetInnerHTML={{ __html: companyData.company_overview }} />
             </div>
           </div>
           <motion.div className="md:w-1/2" variants={zoomIn(0.4, 1)}>
             <img
-              src="https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+              src={`http://127.0.0.1:8000/storage/${companyData.company_overview_image}`}
               alt="Ishani Enterprises Manufacturing Facility"
               className="rounded-lg shadow-xl w-full h-auto"
             />
@@ -204,109 +248,23 @@ const AboutUsPage = () => {
         >
           <div>
             <h3 className="text-2xl font-semibold mb-4">
-              Precision Craftsmanship
+              {companyData.manufacturing_facility_header}
             </h3>
-            <p className="text-gray-600 mb-4">
-              Spread over 15,000 square feet in our Delhi NCR facility, we
-              combine traditional craftsmanship with CNC precision machinery to
-              create French doors and windows of exceptional quality.
-            </p>
-            <ul className="space-y-2 text-gray-600">
-              <li className="flex items-start">
-                <svg
-                  className="h-5 w-5 text-yellow-500 mr-2 mt-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                5 dedicated production lines with capacity of 200+ units/month
-              </li>
-              <li className="flex items-start">
-                <svg
-                  className="h-5 w-5 text-yellow-500 mr-2 mt-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                ISO 9001 certified quality management systems
-              </li>
-              <li className="flex items-start">
-                <svg
-                  className="h-5 w-5 text-yellow-500 mr-2 mt-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                Advanced glass tempering and wood finishing stations
-              </li>
-              <li className="flex items-start">
-                <svg
-                  className="h-5 w-5 text-yellow-500 mr-2 mt-0.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                Sustainable manufacturing with 85% material utilization
-                efficiency
-              </li>
-            </ul>
+            {parse(htmlContent, { replace: transform })}
           </div>
           <motion.div
             className="grid grid-cols-2 gap-4"
             variants={staggerContainer(0.1, 0.2)}
           >
-            <motion.img
+            {companyData.manufacturing_facility_images?.map((image, index) => (
+              <motion.img
               variants={zoomIn(0.1, 1)}
-              src="https://images.unsplash.com/photo-1600566752355-35792bedcfea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-              alt="Woodworking at Ishani Enterprises"
-              className="rounded-lg shadow-md h-full object-cover"
-            />
-            <motion.img
-              variants={zoomIn(0.2, 1)}
-              src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1558&q=80"
-              alt="French door production"
-              className="rounded-lg shadow-md h-full object-cover"
-            />
-            <motion.img
-              variants={zoomIn(0.3, 1)}
-              src="https://images.unsplash.com/photo-1605152276897-4f618f831968?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-              alt="Quality inspection"
-              className="rounded-lg shadow-md h-full object-cover"
-            />
-            <motion.img
-              variants={zoomIn(0.4, 1)}
-              src="https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1632&q=80"
-              alt="Finished French doors"
-              className="rounded-lg shadow-md h-full object-cover"
-            />
+                key={index}
+                src={`http://127.0.0.1:8000/storage/${image}`}
+                alt={companyData.manufacturing_facility_images_alt?.[index]?.alt || ''}
+                className="rounded-lg shadow-md h-full object-cover"
+              />
+            ))}
           </motion.div>
         </motion.div>
 
@@ -344,52 +302,24 @@ const AboutUsPage = () => {
           className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
           variants={staggerContainer(0.1, 0.2)}
         >
-          {[
-            {
-              name: "Rajiv Sharma",
-              position: "Founder & CEO",
-              bio: "With 25+ years in architectural solutions, Rajiv founded Ishani Enterprises to bring European elegance to Indian homes through premium French doors and windows.",
-              image:
-                "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-            },
-            {
-              name: "Priya Malhotra",
-              position: "Operations Director",
-              bio: "Priya oversees our manufacturing excellence, ensuring each French door meets our exacting standards for quality and precision.",
-              image:
-                "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=688&q=80",
-            },
-            {
-              name: "Vikram Singh",
-              position: "Technical Head",
-              bio: "Vikram leads our R&D in innovative French door mechanisms and energy-efficient glazing solutions.",
-              image:
-                "https://images.unsplash.com/photo-1551836022-d5d88e9218df?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
-            },
-            {
-              name: "Neha Kapoor",
-              position: "Design Director",
-              bio: "Neha's expertise in French architectural aesthetics ensures our products blend timeless elegance with contemporary functionality.",
-              image:
-                "https://images.unsplash.com/photo-1580489944761-15a19d654956?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=761&q=80",
-            },
-          ].map((member, index) => (
+            {companyData.leadership_team?.map((data, index) => (
+
             <motion.div
               key={index}
               variants={fadeIn("up", "spring", index * 0.2, 0.75)}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
               <img
-                src={member.image}
-                alt={member.name}
+                src={`http://127.0.0.1:8000/storage/${data.image}`}
+                alt={data.image_alt}
                 className="w-full h-64 object-cover"
               />
               <div className="p-6">
-                <h3 className="text-xl font-semibold mb-1">{member.name}</h3>
+                <h3 className="text-xl font-semibold mb-1">{data.name}</h3>
                 <p className="text-yellow-600 font-medium mb-3">
-                  {member.position}
+                  {data.position}
                 </p>
-                <p className="text-gray-600 text-sm">{member.bio}</p>
+                <p className="text-gray-600 text-sm">{data.bio}</p>
               </div>
             </motion.div>
           ))}

@@ -1,4 +1,6 @@
 import React from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer, zoomIn } from "../../utils/motion";
 import {
@@ -23,6 +25,30 @@ const ContactUsPage = () => {
     { icon: FaInstagram, label: "Instagram", url: "#" },
     { icon: FaWhatsapp, label: "WhatsApp", url: "#" },
   ];
+
+  const [contactData, setContactData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+
+  useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const response = await axios.get('http://localhost:8000/api/contact');
+          setContactData(response.data[0]);
+          console.log(response.data[0]);
+        } catch (error) {
+          console.error("Error fetching contact information:", error);
+        } finally {
+          setLoading(false);
+        }
+      };
+  
+      fetchData();
+    }, []);
+
+    if (loading ) {
+      return <div className="h-[600px] flex items-center justify-center text-gray-500">Loading...</div>;
+    }
 
   return (
     <motion.div
@@ -159,8 +185,8 @@ const ContactUsPage = () => {
                 <IoCallOutline size={24} className="text-yellow-500 mt-1" />
                 <div>
                   <h3 className="font-semibold text-gray-800">Phone</h3>
-                  <p className="text-gray-600">+91 253 2465140</p>
-                  <p className="text-gray-600">+91 94222 55572</p>
+                  <p className="text-gray-600">{contactData?.tel_number || 'Not provided'}</p>
+                  <p className="text-gray-600">{contactData?.mobile_number || 'Not provided'}</p>
                 </div>
               </div>
 
@@ -168,7 +194,7 @@ const ContactUsPage = () => {
                 <MdOutlineEmail size={24} className="text-yellow-500 mt-1" />
                 <div>
                   <h3 className="font-semibold text-gray-800">Email</h3>
-                  <p className="text-gray-600">ishanient@gmail.com</p>
+                  <p className="text-gray-600">{contactData.email}</p>
                 </div>
               </div>
 
@@ -176,7 +202,7 @@ const ContactUsPage = () => {
                 <FaWhatsapp size={24} className="text-yellow-500 mt-1" />
                 <div>
                   <h3 className="font-semibold text-gray-800">WhatsApp</h3>
-                  <p className="text-gray-600">+91 94222 55572</p>
+                  <p className="text-gray-600">{contactData.whatsapp_number}</p>
                 </div>
               </div>
             </div>
@@ -214,15 +240,15 @@ const ContactUsPage = () => {
                 </h3>
               </div>
               <address className="text-gray-600 not-italic pl-9">
-                Ishani Enterprises
+                {contactData.corporate_address_line1}
                 <br />
-                G-8, Prestige Bytco Business Center
+                {contactData.corporate_address_line2}
                 <br />
-                Bytco Point, Nasik Road
+                {contactData.corporate_address_line3}
                 <br />
-                Nasik - 422101
+                {contactData.corporate_address_line4}
                 <br />
-                Maharashtra, India
+                {contactData.corporate_address_line5}
               </address>
             </div>
 
@@ -235,15 +261,15 @@ const ContactUsPage = () => {
                 </h3>
               </div>
               <address className="text-gray-600 not-italic pl-9">
-                Ishani Manufacturing Unit
+                {contactData.factory_address_line1}
                 <br />
-                Plot No. A-12, MIDC Industrial Area
+                {contactData.factory_address_line2}
                 <br />
-                Satpur, Nashik
+                {contactData.factory_address_line3}
                 <br />
-                Maharashtra - 422007
+                {contactData.factory_address_line4}
                 <br />
-                India
+                {contactData.factory_address_line5}
               </address>
             </div>
 
@@ -256,15 +282,15 @@ const ContactUsPage = () => {
                 </h3>
               </div>
               <address className="text-gray-600 not-italic pl-9">
-                Ishani Showroom
+                {contactData.outlet_address_line1}
                 <br />
-                Shop No. 5, Ground Floor
+                {contactData.outlet_address_line2}
                 <br />
-                City Center Mall, College Road
+                {contactData.outlet_address_line3}
                 <br />
-                Nashik - 422005
+                {contactData.outlet_address_line4}
                 <br />
-                Maharashtra, India
+                {contactData.outlet_address_line5}
               </address>
             </div>
           </div>

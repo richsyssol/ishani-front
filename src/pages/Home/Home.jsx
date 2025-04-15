@@ -14,7 +14,7 @@ function Home() {
       <OurProducts />
       <FactoryDisplayOutlet />
       <FranchiseHighlight />
-      <GallerySection />
+      {/* <GallerySection /> */}
     </div>
   );
 }
