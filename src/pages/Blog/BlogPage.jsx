@@ -1,62 +1,87 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer } from "../../utils/motion";
+import axios from "axios";
 
 const BlogPage = () => {
-  // Sample blog data
-  const blogs = [
-    {
-      id: 1,
-      title: "5 Essential Tips for French Door Maintenance",
-      excerpt:
-        "Learn how to keep your French doors looking and functioning like new with these maintenance tips.",
-      category: "Door Maintenance",
-      date: "May 15, 2023",
-      slug: "french-door-maintenance-tips",
-      image:
-        "https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    },
-    {
-      id: 2,
-      title: "2023 Window Design Trends You Should Know",
-      excerpt:
-        "Discover the top window design trends that are dominating homes this year.",
-      category: "Industry Trends",
-      date: "April 28, 2023",
-      slug: "window-design-trends-2023",
-      image:
-        "https://images.unsplash.com/photo-1600121848594-d8644e57abab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-    },
-    {
-      id: 3,
-      title: "How to Choose the Right Windows for Your Climate",
-      excerpt:
-        "Selecting the perfect windows for your regional weather conditions can save energy and improve comfort.",
-      category: "Design Tips",
-      date: "March 10, 2023",
-      slug: "choosing-windows-for-your-climate",
-      image:
-        "https://images.unsplash.com/photo-1600210492493-0946911123ea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80",
-    },
-    {
-      id: 4,
-      title: "The Benefits of Energy-Efficient French Doors",
-      excerpt:
-        "Explore how energy-efficient French doors can enhance your home's comfort and reduce utility bills.",
-      category: "Design Tips",
-      date: "February 22, 2023",
-      slug: "energy-efficient-french-doors",
-      image:
-        "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1400&q=80",
-    },
-  ];
+  const [blogs, setBlogs] = useState([]);
+  const [recentPosts, setRecentPosts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Recent posts for sidebar (last 3)
-  const recentPosts = [...blogs].slice(0, 3);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [postsRes, recentRes] = await Promise.all([
+          axios.get("http://127.0.0.1:8000/api/blog"),
+          axios.get("http://127.0.0.1:8000/api/blog/recent"),
+        ]);
 
-  // Categories
-  const categories = ["Design Tips", "Door Maintenance", "Industry Trends"];
+        setBlogs(postsRes.data.data);
+        setRecentPosts(recentRes.data);
+
+        // Extract unique categories from all posts
+        const allCategories = postsRes.data.data.map((post) => post.category);
+        const uniqueCategories = [...new Set(allCategories)];
+        setCategories(uniqueCategories);
+
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-[600px] md:h-[700px] flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <motion.div
+            className="flex justify-center mb-6"
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 2,
+              ease: "linear",
+              repeat: Infinity,
+            }}
+          >
+            <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+          </motion.div>
+          <motion.h2
+            className="text-2xl font-semibold text-gray-700"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            Loading...
+          </motion.h2>
+          <motion.p
+            className="text-gray-500 mt-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            Preparing your experience
+          </motion.p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12 text-red-500">
+        Error loading blog posts: {error}
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -65,15 +90,6 @@ const BlogPage = () => {
       viewport={{ once: true }}
       className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20"
     >
-      {/* SEO Meta (would be handled by React Helmet in real implementation) */}
-      <title>
-        Ishani Enterprises Blog | Door & Window Design Tips and Trends
-      </title>
-      <meta
-        name="description"
-        content="Explore our blog for expert tips on French door maintenance, window design trends, and industry insights from Ishani Enterprises."
-      />
-
       {/* Page Header */}
       <motion.div
         variants={fadeIn("up", "spring", 0.1, 1)}
@@ -108,7 +124,7 @@ const BlogPage = () => {
               >
                 <Link to={`/blog/${blog.slug}`}>
                   <img
-                    src={blog.image}
+                    src={`http://127.0.0.1:8000/storage/${blog.image_url}`}
                     alt={blog.title}
                     className="w-full h-48 object-cover"
                   />
@@ -121,7 +137,16 @@ const BlogPage = () => {
                     </h2>
                     <p className="text-gray-600 mb-4">{blog.excerpt}</p>
                     <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-500">{blog.date}</span>
+                      <span className="text-sm text-gray-500">
+                        {new Date(blog.published_date).toLocaleDateString(
+                          "en-US",
+                          {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          }
+                        )}
+                      </span>
                       <span className="text-sm font-medium text-yellow-600 hover:text-yellow-700 transition-colors">
                         Read More →
                       </span>
@@ -133,28 +158,27 @@ const BlogPage = () => {
           </motion.div>
 
           {/* Pagination */}
-          <motion.div
-            variants={fadeIn("up", "spring", 0.4, 1)}
-            className="mt-12 flex justify-center"
-          >
-            <nav className="flex items-center space-x-2">
-              <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-500 hover:bg-gray-50">
-                Previous
-              </button>
-              <button className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600">
-                1
-              </button>
-              <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                2
-              </button>
-              <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                3
-              </button>
-              <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                Next
-              </button>
-            </nav>
-          </motion.div>
+          {blogs.length > 0 && (
+            <motion.div
+              variants={fadeIn("up", "spring", 0.4, 1)}
+              className="mt-12 flex justify-center"
+            >
+              <nav className="flex items-center space-x-2">
+                <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-500 hover:bg-gray-50">
+                  Previous
+                </button>
+                <button className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600">
+                  1
+                </button>
+                <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                  2
+                </button>
+                <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                  Next
+                </button>
+              </nav>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Sidebar */}
@@ -206,7 +230,7 @@ const BlogPage = () => {
                       className="flex items-start gap-3 group"
                     >
                       <img
-                        src={post.image}
+                        src={`http://127.0.0.1:8000/storage/${post.image_url}`}
                         alt={post.title}
                         className="w-16 h-16 object-cover rounded"
                       />
@@ -214,7 +238,16 @@ const BlogPage = () => {
                         <h4 className="text-sm font-medium text-gray-800 group-hover:text-yellow-600 transition-colors">
                           {post.title}
                         </h4>
-                        <p className="text-xs text-gray-500">{post.date}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(post.published_date).toLocaleDateString(
+                            "en-US",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
+                        </p>
                       </div>
                     </Link>
                   </li>
@@ -233,7 +266,7 @@ const BlogPage = () => {
                     <Link
                       to={`/blog/category/${category
                         .toLowerCase()
-                        .replace(" ", "-")}`}
+                        .replace(/\s+/g, "-")}`}
                       className="flex items-center justify-between text-gray-600 hover:text-yellow-600 transition-colors"
                     >
                       <span>{category}</span>

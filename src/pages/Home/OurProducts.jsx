@@ -3,7 +3,6 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { FiFilter, FiChevronDown } from "react-icons/fi";
 
-
 const categoryIcons = {
   All: "🌟",
   "uPVC French Doors": "🚪",

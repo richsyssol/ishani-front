@@ -6,16 +6,17 @@ import { ArrowRight } from "lucide-react";
 const WhoWeAre = () => {
   const [sectionData, setSectionData] = useState(null);
   const [loading, setLoading] = useState(true);
-
-
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/whoweare');
-        setSectionData(response.data.data);
+        const response = await axios.get("http://localhost:8000/api/whoweare");
+        setSectionData(response.data?.data || null);
       } catch (error) {
-        console.error("Error fetching products:", error);
+        console.error("Error fetching data:", error);
+        setError("Failed to load content. Please try again later.");
+        setSectionData(null);
       } finally {
         setLoading(false);
       }
@@ -23,11 +24,60 @@ const WhoWeAre = () => {
 
     fetchData();
   }, []);
-  
-  if (loading ) {
-    return <div className="h-[600px] flex items-center justify-center text-gray-500">Loading...</div>;
+
+  if (loading) {
+    return (
+      <div className="h-[600px] md:h-[700px] flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <motion.div
+            className="flex justify-center mb-6"
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 2,
+              ease: "linear",
+              repeat: Infinity,
+            }}
+          >
+            <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+          </motion.div>
+          <motion.h2
+            className="text-2xl font-semibold text-gray-700"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            Loading...
+          </motion.h2>
+          <motion.p
+            className="text-gray-500 mt-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            Preparing your experience
+          </motion.p>
+        </div>
+      </div>
+    );
   }
 
+  if (error) {
+    return (
+      <div className="h-[600px] flex items-center justify-center text-red-500">
+        {error}
+      </div>
+    );
+  }
+
+  if (!sectionData) {
+    return (
+      <div className="h-[600px] flex items-center justify-center text-gray-500">
+        No content available
+      </div>
+    );
+  }
 
   return (
     <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
@@ -41,7 +91,7 @@ const WhoWeAre = () => {
           className="text-center mb-12"
         >
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
-            {sectionData.section_header}
+            {sectionData?.section_header || "Who We Are"}
           </h2>
           <div className="w-20 h-1 bg-yellow-500 mx-auto"></div>
         </motion.div>
@@ -54,9 +104,12 @@ const WhoWeAre = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             viewport={{ once: true, margin: "-100px" }}
           >
-            <p className="text-lg text-gray-700 mb-6 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: sectionData.text_content }}/>
-            
+            {sectionData?.text_content && (
+              <p
+                className="text-lg text-gray-700 mb-6 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: sectionData.text_content }}
+              />
+            )}
 
             <motion.div
               whileHover={{ x: 5 }}
@@ -80,12 +133,24 @@ const WhoWeAre = () => {
             viewport={{ once: true, margin: "-100px" }}
             className="relative h-80 lg:h-96 rounded-xl overflow-hidden shadow-lg"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 to-gray-900/70"></div>
-            <img
-              src={`http://127.0.0.1:8000/storage/${sectionData.section_image}`}
-              alt="Ishani Enterprises French door installation"
-              className="w-full h-full object-cover"
-            />
+            {sectionData?.section_image ? (
+              <>
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/10 to-gray-900/70"></div>
+                <img
+                  src={`http://127.0.0.1:8000/storage/${sectionData.section_image}`}
+                  alt="Ishani Enterprises French door installation"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = "/placeholder-image.jpg";
+                    e.target.alt = "Default placeholder image";
+                  }}
+                />
+              </>
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <span className="text-gray-500">Image not available</span>
+              </div>
+            )}
 
             {/* Floating Stats */}
             <motion.div
@@ -97,12 +162,16 @@ const WhoWeAre = () => {
             >
               <div className="flex items-center space-x-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-600">{sectionData.years_experience}+</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {sectionData?.years_experience || "10"}+
+                  </p>
                   <p className="text-xs text-gray-600">Years Experience</p>
                 </div>
                 <div className="h-8 w-px bg-gray-300"></div>
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-600">{sectionData.projects_completed}+</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {sectionData?.projects_completed || "500"}+
+                  </p>
                   <p className="text-xs text-gray-600">Projects Completed</p>
                 </div>
                 <div className="h-8 w-px bg-gray-300"></div>

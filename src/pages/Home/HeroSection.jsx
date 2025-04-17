@@ -14,24 +14,27 @@ const HeroSection = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [documents, setDocuments] = useState([]);
-
-
-useEffect(() => {
-        axios.get('http://localhost:8000/api/documents')
-            .then((res) => setDocuments(res.data))
-            .catch((err) => console.error(err));
-    }, []);
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
-    // Fetch hero content from backend
-    axios.get("http://localhost:8000/api/herocontent") // Replace with your actual endpoint
-      .then((res) => {
-        setHeroContent(res.data); // Assuming the data is an array
-      })
-      .catch((err) => {
-        console.error("Error fetching hero content:", err);
-      });
+    const fetchData = async () => {
+      try {
+        const [heroRes, docsRes] = await Promise.all([
+          axios.get("http://localhost:8000/api/herocontent"),
+        ]);
+        setHeroContent(heroRes.data || []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError("Failed to load content. Please try again later.");
+        setHeroContent([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -41,22 +44,99 @@ useEffect(() => {
   }, [currentIndex, isAutoPlaying, heroContent]);
 
   const nextImage = () => {
+    if (heroContent.length === 0) return;
     setCurrentIndex((prevIndex) => (prevIndex + 1) % heroContent.length);
   };
 
   const prevImage = () => {
+    if (heroContent.length === 0) return;
     setCurrentIndex(
       (prevIndex) => (prevIndex - 1 + heroContent.length) % heroContent.length
     );
   };
 
-  if (heroContent.length === 0) {
-    return <div className="h-[600px] flex items-center justify-center text-gray-500">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="h-[600px] md:h-[700px] flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <motion.div
+            className="flex justify-center mb-6"
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 2,
+              ease: "linear",
+              repeat: Infinity,
+            }}
+          >
+            <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+          </motion.div>
+          <motion.h2
+            className="text-2xl font-semibold text-gray-700"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            Loading...
+          </motion.h2>
+          <motion.p
+            className="text-gray-500 mt-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            Preparing your experience
+          </motion.p>
+        </div>
+      </div>
+    );
   }
 
-  const { image_url, title, description, ctaHighlight } =
-    heroContent[currentIndex];
+  if (error) {
+    return (
+      <div className="h-[600px] flex items-center justify-center text-gray-500">
+        {error}
+      </div>
+    );
+  }
 
+  if (heroContent.length === 0) {
+    return (
+      <div className="h-[600px] flex items-center justify-center text-gray-500">
+        No hero content available
+      </div>
+    );
+  }
+
+  const currentItem = heroContent[currentIndex] || {};
+  const { image_url, title, description, ctaHighlight } = currentItem;
+
+  const handleDownload = async () => {
+    try {
+      setIsDownloading(true);
+      const response = await axios.get("http://localhost:8000/api/document", {
+        responseType: "blob", // Important for file downloads
+      });
+
+      // Create blob URL for the file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "Ishani-Enterprises-Catalog.pdf");
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+      alert("Failed to download catalog. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
   return (
     <>
       {/* Hero Section */}
@@ -66,35 +146,48 @@ useEffect(() => {
         onMouseLeave={() => setIsAutoPlaying(true)}
       >
         {/* Background Image */}
-        <motion.div
-          className="absolute inset-0 w-full h-full bg-cover bg-center"
-          style={{ backgroundImage: `url\(${image_url})` }}
-          key={image_url}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-        >
-          <div className="absolute inset-0 bg-black/50"></div>
-        </motion.div>
+        {image_url && (
+          <motion.div
+            className="absolute inset-0 w-full h-full bg-cover bg-center"
+            style={{
+              backgroundImage:
+                `url(` +
+                import.meta.env.VITE_PUBLIC_IMAGE_PATH +
+                `/${image_url})`,
+            }}
+            key={image_url}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+          >
+            <div className="absolute inset-0 bg-black/50"></div>
+          </motion.div>
+        )}
+
         {/* Navigation Arrows */}
-        <button
-          onClick={prevImage}
-          className="hidden md:flex absolute left-4 md:left-10 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 p-3 rounded-full z-10 backdrop-blur-sm transition-all"
-          aria-label="Previous slide"
-        >
-          <ChevronLeft className="text-white w-6 h-6" />
-        </button>
-        <button
-          onClick={nextImage}
-          className="hidden md:flex absolute right-4 md:right-10 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 p-3 rounded-full z-10 backdrop-blur-sm transition-all"
-          aria-label="Next slide"
-        >
-          <ChevronRight className="text-white w-6 h-6" />
-        </button>
+        {heroContent.length > 1 && (
+          <>
+            <button
+              onClick={prevImage}
+              className="hidden md:flex absolute left-4 md:left-10 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 p-3 rounded-full z-10 backdrop-blur-sm transition-all"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft className="text-white w-6 h-6" />
+            </button>
+            <button
+              onClick={nextImage}
+              className="hidden md:flex absolute right-4 md:right-10 top-1/2 transform -translate-y-1/2 bg-white/20 hover:bg-white/30 p-3 rounded-full z-10 backdrop-blur-sm transition-all"
+              aria-label="Next slide"
+            >
+              <ChevronRight className="text-white w-6 h-6" />
+            </button>
+          </>
+        )}
+
         {/* Text Content */}
         <motion.div
           className="relative z-10 flex flex-col justify-center items-center max-w-4xl mx-auto px-4"
-          key={title}
+          key={title || "default"}
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
@@ -109,26 +202,31 @@ useEffect(() => {
               {ctaHighlight}
             </motion.div>
           )}
-          <h1 className="text-3xl  md:text-center sm:text-5xl lg:text-6xl font-bold mb-4">
-            {title}
+          <h1 className="text-3xl md:text-center sm:text-5xl lg:text-6xl font-bold mb-4">
+            {title || "Welcome to Ishani Enterprises"}
           </h1>
-          <p className="mt-4 text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
-            {description}
-          </p>
+          {description && (
+            <p className="mt-4 text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
+              {description}
+            </p>
+          )}
         </motion.div>
-        Indicators
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
-          {heroContent.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-3 h-3 rounded-full transition-all ${
-                currentIndex === index ? "bg-yellow-500 w-6" : "bg-white/50"
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
-          ))}
-        </div>
+
+        {/* Indicators */}
+        {heroContent.length > 1 && (
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+            {heroContent.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentIndex(index)}
+                className={`w-3 h-3 rounded-full transition-all ${
+                  currentIndex === index ? "bg-yellow-500 w-6" : "bg-white/50"
+                }`}
+                aria-label={`Go to slide ${index + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* CTA Section */}
@@ -164,11 +262,12 @@ useEffect(() => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="flex items-center justify-center gap-2 bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-900 transition font-semibold w-full"
+                onClick={handleDownload}
+                disabled={isDownloading}
               >
                 <Download className="w-5 h-5" />
-                Download Catalog
+                {isDownloading ? "Downloading..." : "Download Catalog"}
               </motion.button>
-
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}

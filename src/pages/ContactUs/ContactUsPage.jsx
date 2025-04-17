@@ -29,26 +29,30 @@ const ContactUsPage = () => {
   const [contactData, setContactData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
   useEffect(() => {
-      const fetchData = async () => {
-        try {
-          const response = await axios.get('http://localhost:8000/api/contact');
-          setContactData(response.data[0]);
-          console.log(response.data[0]);
-        } catch (error) {
-          console.error("Error fetching contact information:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-  
-      fetchData();
-    }, []);
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:8000/api/contact");
+        console.log(response);
+        setContactData(response.data || null);
+      } catch (error) {
+        console.error("Error fetching contact information:", error);
+        setContactData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (loading ) {
-      return <div className="h-[600px] flex items-center justify-center text-gray-500">Loading...</div>;
-    }
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-[600px] flex items-center justify-center text-gray-500">
+        Loading...
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -185,8 +189,12 @@ const ContactUsPage = () => {
                 <IoCallOutline size={24} className="text-yellow-500 mt-1" />
                 <div>
                   <h3 className="font-semibold text-gray-800">Phone</h3>
-                  <p className="text-gray-600">{contactData?.tel_number || 'Not provided'}</p>
-                  <p className="text-gray-600">{contactData?.mobile_number || 'Not provided'}</p>
+                  <p className="text-gray-600">
+                    {contactData?.tel_number || "Not provided"}
+                  </p>
+                  <p className="text-gray-600">
+                    {contactData?.mobile_number || "Not provided"}
+                  </p>
                 </div>
               </div>
 
@@ -194,7 +202,9 @@ const ContactUsPage = () => {
                 <MdOutlineEmail size={24} className="text-yellow-500 mt-1" />
                 <div>
                   <h3 className="font-semibold text-gray-800">Email</h3>
-                  <p className="text-gray-600">{contactData.email}</p>
+                  <p className="text-gray-600">
+                    {contactData?.email || "Not provided"}
+                  </p>
                 </div>
               </div>
 
@@ -202,7 +212,9 @@ const ContactUsPage = () => {
                 <FaWhatsapp size={24} className="text-yellow-500 mt-1" />
                 <div>
                   <h3 className="font-semibold text-gray-800">WhatsApp</h3>
-                  <p className="text-gray-600">{contactData.whatsapp_number}</p>
+                  <p className="text-gray-600">
+                    {contactData?.whatsapp_number || "Not provided"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -229,9 +241,7 @@ const ContactUsPage = () => {
             </div>
           </div>
 
-          {/* Addresses */}
           <div className="space-y-6">
-            {/* Corporate Office */}
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <IoLocationOutline size={24} className="text-yellow-500" />
@@ -240,19 +250,18 @@ const ContactUsPage = () => {
                 </h3>
               </div>
               <address className="text-gray-600 not-italic pl-9">
-                {contactData.corporate_address_line1}
+                {contactData?.corporate_address_line1 || "Not provided"}
                 <br />
-                {contactData.corporate_address_line2}
+                {contactData?.corporate_address_line2 || "Not provided"}
                 <br />
-                {contactData.corporate_address_line3}
+                {contactData?.corporate_address_line3 || "Not provided"}
                 <br />
-                {contactData.corporate_address_line4}
+                {contactData?.corporate_address_line4 || "Not provided"}
                 <br />
-                {contactData.corporate_address_line5}
+                {contactData?.corporate_address_line5 || "Not provided"}
               </address>
             </div>
 
-            {/* Factory Address */}
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <MdOutlineFactory size={24} className="text-yellow-500" />
@@ -261,19 +270,18 @@ const ContactUsPage = () => {
                 </h3>
               </div>
               <address className="text-gray-600 not-italic pl-9">
-                {contactData.factory_address_line1}
+                {contactData?.factory_address_line1 || "Not provided"}
                 <br />
-                {contactData.factory_address_line2}
+                {contactData?.factory_address_line2 || "Not provided"}
                 <br />
-                {contactData.factory_address_line3}
+                {contactData?.factory_address_line3 || "Not provided"}
                 <br />
-                {contactData.factory_address_line4}
+                {contactData?.factory_address_line4 || "Not provided"}
                 <br />
-                {contactData.factory_address_line5}
+                {contactData?.factory_address_line5 || "Not provided"}
               </address>
             </div>
 
-            {/* Outlet Address */}
             <div className="bg-white p-6 rounded-xl shadow-sm">
               <div className="flex items-center gap-3 mb-4">
                 <IoStorefrontOutline size={24} className="text-yellow-500" />
@@ -282,15 +290,15 @@ const ContactUsPage = () => {
                 </h3>
               </div>
               <address className="text-gray-600 not-italic pl-9">
-                {contactData.outlet_address_line1}
+                {contactData?.outlet_address_line1 || "Not provided"}
                 <br />
-                {contactData.outlet_address_line2}
+                {contactData?.outlet_address_line2 || "Not provided"}
                 <br />
-                {contactData.outlet_address_line3}
+                {contactData?.outlet_address_line3 || "Not provided"}
                 <br />
-                {contactData.outlet_address_line4}
+                {contactData?.outlet_address_line4 || "Not provided"}
                 <br />
-                {contactData.outlet_address_line5}
+                {contactData?.outlet_address_line5 || "Not provided"}
               </address>
             </div>
           </div>

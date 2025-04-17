@@ -1,22 +1,25 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { MapPin, Calendar, Phone } from "lucide-react";
+import { MapPin, Calendar, Phone, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 
 const FactoryDisplayOutlet = () => {
-
-  const [sectionData, setSectionData] = useState([]);
+  const [sectionData, setSectionData] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchOutletData = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/factoryoutlet');
-        setSectionData(response.data.data);
+        const response = await axios.get(
+          "http://localhost:8000/api/factoryoutlet"
+        );
+        setSectionData(response.data?.data || null);
       } catch (error) {
         console.error("Error fetching factoryoutlet:", error);
+        setError("Failed to load factory outlet information");
+        setSectionData(null);
       } finally {
         setLoading(false);
       }
@@ -24,7 +27,65 @@ const FactoryDisplayOutlet = () => {
 
     fetchOutletData();
   }, []);
-  
+
+  if (loading) {
+    return (
+      <div className="h-[600px] md:h-[700px] flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <motion.div
+            className="flex justify-center mb-6"
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 2,
+              ease: "linear",
+              repeat: Infinity,
+            }}
+          >
+            <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+          </motion.div>
+          <motion.h2
+            className="text-2xl font-semibold text-gray-700"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            Loading...
+          </motion.h2>
+          <motion.p
+            className="text-gray-500 mt-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            Preparing your experience
+          </motion.p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto h-96 flex items-center justify-center">
+          <div className="text-red-500">{error}</div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!sectionData) {
+    return (
+      <section className="bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto h-96 flex items-center justify-center">
+          <div className="text-gray-500">No factory information available</div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
@@ -46,11 +107,12 @@ const FactoryDisplayOutlet = () => {
                 loading="lazy"
                 aria-hidden="false"
                 tabIndex="0"
+                title="Factory Location Map"
               />
               <div className="absolute bottom-4 left-4 bg-white px-3 py-2 rounded-lg shadow-md flex items-center gap-2">
                 <MapPin className="text-yellow-600 w-5 h-5" />
                 <span className="font-medium text-gray-800">
-                  Nashik Factory Outlet
+                  {sectionData?.outlet_name || "Nashik Factory Outlet"}
                 </span>
               </div>
             </div>
@@ -59,10 +121,17 @@ const FactoryDisplayOutlet = () => {
             <div className="p-8 flex flex-col justify-between">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-3">
-                  {sectionData.header}
+                  {sectionData?.header || "Our Factory Outlet"}
                 </h2>
-                <p className="text-gray-600 mb-6 prose" dangerouslySetInnerHTML={{ __html: sectionData.text_content }}/>
-                  
+
+                {sectionData?.text_content && (
+                  <p
+                    className="text-gray-600 mb-6 prose"
+                    dangerouslySetInnerHTML={{
+                      __html: sectionData.text_content,
+                    }}
+                  />
+                )}
 
                 <div className="space-y-4">
                   <div className="flex items-start gap-3">
@@ -70,38 +139,32 @@ const FactoryDisplayOutlet = () => {
                     <div>
                       <h4 className="font-semibold text-gray-800">Location</h4>
                       <p className="text-gray-600">
-                      {sectionData.location_line_1}
+                        {sectionData?.location_line_1 ||
+                          "Prestige Bytco Business Center"}
                         <br />
-                        {sectionData.location_line_2}
+                        {sectionData?.location_line_2 ||
+                          "Mahatma Gandhi Rd, Rajwada Nagar"}
                         <br />
-                        {sectionData.location_line_3}
+                        {sectionData?.location_line_3 || "Nashik Road"}
                         <br />
-                        {sectionData.location_line_4}
+                        {sectionData?.location_line_4 ||
+                          "Nashik, Maharashtra 422214"}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-5 w-5 text-yellow-600 mt-1 flex-shrink-0"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
+                    <Clock className="text-yellow-600 mt-1 flex-shrink-0 w-5 h-5" />
                     <div>
                       <h4 className="font-semibold text-gray-800">
                         Opening Hours
                       </h4>
                       <p className="text-gray-600">
-                        {sectionData.opening_hours_line_1}
+                        {sectionData?.opening_hours_line_1 ||
+                          "Monday - Saturday: 9:30 AM - 7:30 PM"}
                         <br />
-                        {sectionData.opening_hours_line_2}
+                        {sectionData?.opening_hours_line_2 ||
+                          "Sunday: 10:00 AM - 2:00 PM"}
                       </p>
                     </div>
                   </div>
@@ -126,11 +189,11 @@ const FactoryDisplayOutlet = () => {
                 </div>
 
                 <a
-                  href="tel:+919422255572"
+                  href={`tel:${sectionData?.contact_number || "+919422255572"}`}
                   className="flex items-center justify-center gap-2 text-gray-700 hover:text-yellow-600 font-medium transition-colors"
                 >
                   <Phone className="w-5 h-5" />
-                  {sectionData.contact_number}
+                  {sectionData?.contact_number || "+91 94222 55572"}
                 </a>
               </div>
             </div>

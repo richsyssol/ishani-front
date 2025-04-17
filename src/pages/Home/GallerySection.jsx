@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { ChevronLeft, ChevronRight, Dot, Circle } from "lucide-react";
 
-
 const GallerySection = () => {
   const [galleryImage, setGalleryImage] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
@@ -17,10 +16,10 @@ const GallerySection = () => {
     const fetchData = async () => {
       try {
         const [galleryResponse, testimonialsResponse] = await Promise.all([
-          axios.get('http://localhost:8000/api/gallery'),
-          axios.get('http://localhost:8000/api/testimonials')
+          axios.get("http://localhost:8000/api/gallery"),
+          axios.get("http://localhost:8000/api/testimonials"),
         ]);
-      console.log(galleryResponse,testimonialsResponse)
+        console.log(galleryResponse, testimonialsResponse);
         setGalleryImage(galleryResponse.data.data.data);
         setTestimonials(testimonialsResponse.data.data.data);
       } catch (error) {
@@ -33,10 +32,13 @@ const GallerySection = () => {
     fetchData();
   }, []);
 
-  if (loading ) {
-    return <div className="h-[600px] flex items-center justify-center text-gray-500">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="h-[600px] flex items-center justify-center text-gray-500">
+        Loading...
+      </div>
+    );
   }
-  
 
   // Main gallery navigation
   const nextImage = () => {
