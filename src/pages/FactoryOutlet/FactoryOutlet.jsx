@@ -1,9 +1,92 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer, zoomIn } from "../../utils/motion";
 
 const FactoryOutletPage = () => {
+
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [contactItems, setContactItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [formData, setFormData] = useState({
+    full_name: '',
+    email: '',
+    phone_number: '',
+    visit_date:'',
+    preferred_time:'',
+    special_requests:''
+  });
+  const [submitStatus, setSubmitStatus] = useState(null);
+
+   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [ response1, response2 ] = await Promise.all([
+          axios.get("http://localhost:8000/api/showroomgallery"),
+          axios.get("http://localhost:8000/api/contact")
+        ]);
+         setGalleryItems(response1?.data ?? []);
+        setContactItems(response2?.data ?? []);
+      } catch (err) {
+        setError(err?.message ?? 'Something went wrong');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+  
+
+  if (loading) {
+      return (
+        <div className="h-[600px] md:h-[700px] flex items-center justify-center bg-gray-100">
+          <div className="text-center">
+            <motion.div
+              className="flex justify-center mb-6"
+              animate={{
+                rotate: 360,
+              }}
+              transition={{
+                duration: 2,
+                ease: "linear",
+                repeat: Infinity,
+              }}
+            >
+              <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+            </motion.div>
+            <motion.h2
+              className="text-2xl font-semibold text-gray-700"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              Loading...
+            </motion.h2>
+            <motion.p
+              className="text-gray-500 mt-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              Preparing your experience
+            </motion.p>
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+    return (
+      <div className="text-center py-12 text-red-500">
+        Error loading data: {error}
+      </div>
+    );
+  }
+
+
   return (
     <motion.div
       initial="hidden"
@@ -70,51 +153,20 @@ const FactoryOutletPage = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           variants={staggerContainer(0.1, 0.2)}
         >
-          {[
-            {
-              src: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1400&q=80",
-              alt: "Nashik showroom entrance",
-              title: "Nashik Showroom Entrance",
-            },
-            {
-              src: "https://images.unsplash.com/photo-1600210492493-0946911123ea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1374&q=80",
-              alt: "French doors display in Nashik",
-              title: "French Doors Collection in Nashik",
-            },
-            {
-              src: "https://images.unsplash.com/photo-1600585152220-90363fe7e115?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-              alt: "Window displays in Nashik",
-              title: "Premium Windows Gallery in Nashik",
-            },
-            {
-              src: "https://images.unsplash.com/photo-1600121848594-d8644e57abab?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-              alt: "Material samples in Nashik",
-              title: "Material Selection Area in Nashik",
-            },
-            {
-              src: "https://images.unsplash.com/photo-1556909114-44e1d6a03c26?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-              alt: "Design consultation in Nashik",
-              title: "Nashik Design Consultation Desk",
-            },
-            {
-              src: "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80",
-              alt: "Outdoor displays in Nashik",
-              title: "Nashik Outdoor Installation Showcase",
-            },
-          ].map((image, index) => (
+          {galleryItems.map((item) => (
             <motion.div
-              key={index}
-              variants={fadeIn("up", "spring", index * 0.1, 1)}
+              key={item.id}
+              variants={fadeIn("up", "spring", item * 0.1, 1)}
               className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
             >
               <img
-                src={image.src}
-                alt={image.alt}
+                src={`${import.meta.env.VITE_PUBLIC_IMAGE_PATH}/${item.src}`}
+                alt={item.alt}
                 className="w-full h-64 object-cover"
               />
               <div className="p-4">
                 <h3 className="font-semibold text-lg text-gray-800">
-                  {image.title}
+                  {item.title}
                 </h3>
               </div>
             </motion.div>
@@ -170,13 +222,15 @@ const FactoryOutletPage = () => {
                         d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                       />
                     </svg>
-                    Ishani Enterprises
+                    {contactItems.corporate_address_line1}
                     <br />
-                    G-8, Prestige Bytco
+                    {contactItems.corporate_address_line2}
                     <br />
-                    Business Center, Bytco Point
+                    {contactItems.corporate_address_line3}
                     <br />
-                    Nasik Road, Nasik - 422101
+                    {contactItems.corporate_address_line4}
+                    <br />
+                    {contactItems.corporate_address_line5}
                   </p>
                   <p className="flex items-center">
                     <svg
@@ -193,7 +247,7 @@ const FactoryOutletPage = () => {
                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
-                    Open: Monday to Saturday, 9:00 AM - 6:00 PM
+                    {contactItems.open_hours}
                   </p>
                   <p className="flex items-center">
                     <svg
@@ -210,11 +264,11 @@ const FactoryOutletPage = () => {
                         d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                       />
                     </svg>
-                    Phone: +91 253 2465140
+                    Phone: {contactItems.tel_number}
                     <br />
-                    Mobile: +91 94222 55572
+                    Mobile: {contactItems.mobile_number}
                     <br />
-                    Email: ishanient@gmail.com
+                    Email: {contactItems.email}
                   </p>
                 </address>
 
@@ -225,18 +279,15 @@ const FactoryOutletPage = () => {
                   <ul className="space-y-2 text-gray-600">
                     <li className="flex items-start">
                       <span className="text-yellow-500 mr-2">•</span>
-                      <strong>By Road:</strong> Located on Nasik Road near Bytco
-                      Point, easily accessible from Mumbai-Agra Highway
+                      <strong>By Road:</strong> {contactItems.by_road}
                     </li>
                     <li className="flex items-start">
                       <span className="text-yellow-500 mr-2">•</span>
-                      <strong>Parking:</strong> Ample parking space available in
-                      Prestige Bytco complex
+                      <strong>Parking:</strong> {contactItems.parking}
                     </li>
                     <li className="flex items-start">
                       <span className="text-yellow-500 mr-2">•</span>
-                      <strong>Public Transport:</strong> Well connected by city
-                      buses and auto-rickshaws
+                      <strong>Public Transport:</strong> {contactItems.public_transport}
                     </li>
                   </ul>
                 </div>
