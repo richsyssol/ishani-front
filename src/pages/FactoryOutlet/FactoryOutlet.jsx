@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -14,20 +14,22 @@ const FactoryOutletPage = () => {
     full_name: '',
     email: '',
     phone_number: '',
-    visit_date:'',
-    preferred_time:'',
-    special_requests:''
+    preferred_date: '',
+    preferred_time: '',
+    special_requests: ''
   });
   const [submitStatus, setSubmitStatus] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
 
-   useEffect(() => {
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const [ response1, response2 ] = await Promise.all([
+        const [response1, response2] = await Promise.all([
           axios.get("http://localhost:8000/api/showroomgallery"),
           axios.get("http://localhost:8000/api/contact")
         ]);
-         setGalleryItems(response1?.data ?? []);
+        setGalleryItems(response1?.data ?? []);
         setContactItems(response2?.data ?? []);
       } catch (err) {
         setError(err?.message ?? 'Something went wrong');
@@ -38,47 +40,109 @@ const FactoryOutletPage = () => {
 
     fetchData();
   }, []);
-  
+
+  const handleInputChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitStatus('submitting');
+    setSubmitError(null);
+
+
+
+    try {
+      const response = await axios.post('http://localhost:8000/api/visit-requests', formData, {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+      console.log(response?.data);
+      if (response.status >= 200 && response.status < 300) {
+      setSubmitStatus('success');
+      setFormData({
+          full_name: '',
+          email: '',
+          phone_number: '',
+          preferred_date: '',
+          preferred_time: '',
+          special_requests: ''
+        });
+      } else {
+        throw new Error(response.data?.message || 'Submission failed');
+      }
+    } catch (err) {
+      console.error(err);
+      setSubmitStatus('error');
+
+      if (err.response) {
+        // Server responded with a status code outside 2xx range
+        if (err.response.data?.errors) {
+          // Validation errors from server
+          setSubmitError(
+            Object.values(err.response.data.errors).join(' ') || 
+            'Please check your input and try again.'
+          );
+        } else {
+          setSubmitError(
+            err.response.data?.message || 
+            `Server error: ${err.response.status} - ${err.response.statusText}`
+          );
+        }
+      } else if (err.request) {
+        // Request was made but no response received
+        setSubmitError('Network error - please check your connection and try again.');
+      } else {
+        // Something else happened
+        setSubmitError(err.message || 'An unexpected error occurred.');
+      }
+    }
+    
+  };
 
   if (loading) {
-      return (
-        <div className="h-[600px] md:h-[700px] flex items-center justify-center bg-gray-100">
-          <div className="text-center">
-            <motion.div
-              className="flex justify-center mb-6"
-              animate={{
-                rotate: 360,
-              }}
-              transition={{
-                duration: 2,
-                ease: "linear",
-                repeat: Infinity,
-              }}
-            >
-              <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
-            </motion.div>
-            <motion.h2
-              className="text-2xl font-semibold text-gray-700"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              Loading...
-            </motion.h2>
-            <motion.p
-              className="text-gray-500 mt-2"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
-              Preparing your experience
-            </motion.p>
-          </div>
+    return (
+      <div className="h-[600px] md:h-[700px] flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <motion.div
+            className="flex justify-center mb-6"
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 2,
+              ease: "linear",
+              repeat: Infinity,
+            }}
+          >
+            <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+          </motion.div>
+          <motion.h2
+            className="text-2xl font-semibold text-gray-700"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            Loading...
+          </motion.h2>
+          <motion.p
+            className="text-gray-500 mt-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            Preparing your experience
+          </motion.p>
         </div>
-      );
-    }
+      </div>
+    );
+  }
 
-    if (error) {
+  if (error) {
     return (
       <div className="text-center py-12 text-red-500">
         Error loading data: {error}
@@ -404,7 +468,7 @@ const FactoryOutletPage = () => {
             </div>
 
             <div className="p-8 md:p-12">
-              <form className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label
                     htmlFor="name"
@@ -415,6 +479,9 @@ const FactoryOutletPage = () => {
                   <input
                     type="text"
                     id="name"
+                    name="full_name"
+                    value={formData.full_name ?? ''}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                     required
                   />
@@ -430,6 +497,9 @@ const FactoryOutletPage = () => {
                   <input
                     type="email"
                     id="email"
+                    name="email"
+                    value={formData.email ?? ''}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                     required
                   />
@@ -445,6 +515,9 @@ const FactoryOutletPage = () => {
                   <input
                     type="tel"
                     id="phone"
+                    name="phone_number"
+                    value={formData.phone_number ?? ''}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                     required
                   />
@@ -460,6 +533,9 @@ const FactoryOutletPage = () => {
                   <input
                     type="date"
                     id="date"
+                    name="preferred_date"
+                    value={formData.preferred_date ?? ''}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                     required
                   />
@@ -474,6 +550,9 @@ const FactoryOutletPage = () => {
                   </label>
                   <select
                     id="time"
+                    name="preferred_time"
+                    value={formData.preferred_time ?? ''}
+                    onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                     required
                   >
@@ -502,6 +581,9 @@ const FactoryOutletPage = () => {
                   </label>
                   <textarea
                     id="notes"
+                    name="special_requests"
+                    value={formData.special_requests ?? ''}
+                    onChange={handleInputChange}
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                   ></textarea>
@@ -509,12 +591,82 @@ const FactoryOutletPage = () => {
 
                 <button
                   type="submit"
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-md transition-colors"
+                  disabled={submitStatus === 'submitting'}
+                  className={`w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-md transition-colors ${
+                    submitStatus === 'submitting' ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
                 >
-                  Book Your Nashik Visit
+                 {submitStatus === 'submitting' ? (
+                    <span className="flex items-center justify-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : (
+                    'Book Your Nashik Visit'
+                  )}
                 </button>
               </form>
+
+              {/* Form Submission Messages */}
+              <div className="mt-4">
+                {submitStatus === 'submitting' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center p-4 bg-blue-50 rounded-md"
+                  >
+                    <svg className="w-5 h-5 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span className="text-blue-700">Submitting your request...</span>
+                  </motion.div>
+                )}
+
+                {submitStatus === 'success' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center p-4 bg-green-50 rounded-md"
+                  >
+                    <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <div>
+                      <p className="font-medium text-green-700">Thank you for your request!</p>
+                      <p className="text-sm text-green-600 mt-1">We've received your booking details and will contact you shortly to confirm your visit.</p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {submitStatus === 'error' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 bg-red-50 rounded-md"
+                  >
+                    <div className="flex items-start">
+                      <svg className="w-5 h-5 text-red-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                      <div>
+                        <p className="font-medium text-red-700">There was an error submitting your form</p>
+                        <p className="text-sm text-red-600 mt-1">{submitError || 'Please try again later.'}</p>
+                        <button
+                          onClick={() => setSubmitStatus(null)}
+                          className="mt-2 text-sm font-medium text-red-600 hover:text-red-700 focus:outline-none"
+                        >
+                          Try again →
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
             </div>
+
           </div>
         </motion.div>
       </motion.section>
