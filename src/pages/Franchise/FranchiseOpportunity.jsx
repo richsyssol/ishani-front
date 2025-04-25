@@ -1,44 +1,227 @@
 import React from "react";
+import { useState, useEffect } from "react";
+import DOMPurify from 'dompurify';
+import parse, { domToReact } from "html-react-parser";
+import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer, zoomIn } from "../../utils/motion";
 
 const FranchisePage = () => {
-  const franchiseTestimonials = [
-    {
-      name: "Rajesh Mehta",
-      location: "Pune Franchise",
-      quote:
-        "Partnering with Ishani Enterprises has been transformative. Their support system and quality products helped us break even within 8 months.",
-      rating: 5,
-    },
-    {
-      name: "Priya Sharma",
-      location: "Mumbai Franchise",
-      quote:
-        "The training and marketing support from Ishani made launching our franchise smooth and successful. Excellent ROI in the first year itself.",
-      rating: 5,
-    },
-  ];
 
-  const availableCities = [
-    "Nagpur",
-    "Aurangabad",
-    "Kolhapur",
-    "Solapur",
-    "Amravati",
-    "Jalgaon",
-    "Nanded",
-    "Sangli",
-    "Malegaon",
-    "Akola",
-    "Latur",
-    "Dhule",
-    "Ahmednagar",
-    "Chandrapur",
-    "Parbhani",
-    "Jalna",
-  ];
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    preferred_city: '',
+    investment_capacity: '10-20 lakhs',
+    business_experience: '',
+    consent_marketing: false
+  });
+
+  const [franchiseSP, setFranchiseSP] = useState({});
+  const [testimonials, setTestimonials] = useState([]);
+  const [submitStatus, setSubmitStatus] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [franchiseResponse, testimonialsResponse] = await Promise.all([
+          axios.get("http://localhost:8000/api/franchise"),
+          axios.get("http://localhost:8000/api/testimonials"),
+        ]);
+        console.log(franchiseResponse, testimonialsResponse);
+        setFranchiseSP(franchiseResponse.data.data);
+        setTestimonials(testimonialsResponse.data.data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const renderRichContent = (html) => {
+    const sanitized = DOMPurify.sanitize(html || "");
+
+    const options = {
+      replace: (domNode) => {
+        if (domNode.name === "ul" && Array.isArray(domNode.children)) {
+          return (
+            <ul className="space-y-4 text-gray-600">
+              {domToReact(domNode.children, options)}
+            </ul>
+          );
+        }
+
+        if (domNode.name === "li") {
+          const children = domToReact(domNode.children, options);
+          return (
+            <li className="flex items-start">
+              <span className="text-yellow-500 mr-2 mt-1">✓</span>
+              <span>{children}</span>
+            </li>
+          );
+        }
+
+        if (domNode.name === "strong") {
+          return (
+            <strong className="text-gray-800">
+              {domToReact(domNode.children, options)}
+            </strong>
+          );
+        }
+      },
+    };
+
+    return parse(sanitized, options);
+  };
+
+
+
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitStatus('submitting');
+    setSubmitError(null);
+
+    try {
+      const response = await axios.post('http://localhost:8000/api/franchise-applications', formData, {
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      console.log(response?.data);
+      if (response.status >= 200 && response.status < 300) {
+        setSubmitStatus('success');
+        setFormData({
+          first_name: '',
+          last_name: '',
+          email: '',
+          phone: '',
+          preferred_city: '',
+          investment_capacity: '10-20 lakhs',
+          business_experience: '',
+          consent_marketing: false
+        });
+      } else {
+        throw new Error(response.data?.message || 'Submission failed');
+      }
+    } catch (err) {
+      console.error(err);
+      setSubmitStatus('error');
+
+      if (err.response) {
+        // Server responded with a status code outside 2xx range
+        if (err.response.data?.errors) {
+          // Validation errors from server
+          setSubmitError(
+            Object.values(err.response.data.errors).join(' ') ||
+            'Please check your input and try again.'
+          );
+        } else {
+          setSubmitError(
+            err.response.data?.message ||
+            `Server error: ${err.response.status} - ${err.response.statusText}`
+          );
+        }
+      } else if (err.request) {
+        // Request was made but no response received
+        setSubmitError('Network error - please check your connection and try again.');
+      } else {
+        // Something else happened
+        setSubmitError(err.message || 'An unexpected error occurred.');
+      }
+    }
+  };
+
+  // if (loading) {
+  //     return (
+  //       <div className="h-[600px] md:h-[700px] flex items-center justify-center bg-gray-100">
+  //         <div className="text-center">
+  //           <motion.div
+  //             className="flex justify-center mb-6"
+  //             animate={{
+  //               rotate: 360,
+  //             }}
+  //             transition={{
+  //               duration: 2,
+  //               ease: "linear",
+  //               repeat: Infinity,
+  //             }}
+  //           >
+  //             <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+  //           </motion.div>
+  //           <motion.h2
+  //             className="text-2xl font-semibold text-gray-700"
+  //             initial={{ opacity: 0 }}
+  //             animate={{ opacity: 1 }}
+  //             transition={{ duration: 0.5 }}
+  //           >
+  //             Loading...
+  //           </motion.h2>
+  //           <motion.p
+  //             className="text-gray-500 mt-2"
+  //             initial={{ opacity: 0 }}
+  //             animate={{ opacity: 1 }}
+  //             transition={{ delay: 0.2, duration: 0.5 }}
+  //           >
+  //             Preparing your experience
+  //           </motion.p>
+  //         </div>
+  //       </div>
+  //     );
+  //   }
+
+
+
+
+  // const franchiseTestimonials = [
+  //   {
+  //     name: "Rajesh Mehta",
+  //     location: "Pune Franchise",
+  //     quote:
+  //       "Partnering with Ishani Enterprises has been transformative. Their support system and quality products helped us break even within 8 months.",
+  //     rating: 5,
+  //   },
+  //   {
+  //     name: "Priya Sharma",
+  //     location: "Mumbai Franchise",
+  //     quote:
+  //       "The training and marketing support from Ishani made launching our franchise smooth and successful. Excellent ROI in the first year itself.",
+  //     rating: 5,
+  //   },
+  // ];
+
+  // const availableCities = [
+  //   "Nagpur",
+  //   "Aurangabad",
+  //   "Kolhapur",
+  //   "Solapur",
+  //   "Amravati",
+  //   "Jalgaon",
+  //   "Nanded",
+  //   "Sangli",
+  //   "Malegaon",
+  //   "Akola",
+  //   "Latur",
+  //   "Dhule",
+  //   "Ahmednagar",
+  //   "Chandrapur",
+  //   "Parbhani",
+  //   "Jalna",
+  // ];
 
   return (
     <motion.div
@@ -193,52 +376,16 @@ const FranchisePage = () => {
           <motion.div
             className="grid md:grid-cols-2 gap-8"
             variants={staggerContainer(0.1, 0.2)}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.25 }}
           >
             <motion.div variants={fadeIn("right", "spring", 0.3, 1)}>
               <div className="bg-white p-6 rounded-lg shadow-sm">
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">
                   Franchise Support
                 </h3>
-                <ul className="space-y-4 text-gray-600">
-                  <li className="flex items-start">
-                    <span className="text-yellow-500 mr-2">✓</span>
-                    <div>
-                      <strong className="text-gray-800">
-                        Complete Setup Guidance:
-                      </strong>{" "}
-                      Site selection, store design, and setup assistance
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-yellow-500 mr-2">✓</span>
-                    <div>
-                      <strong className="text-gray-800">
-                        Training Programs:
-                      </strong>{" "}
-                      Product knowledge, sales techniques, and installation
-                      training
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-yellow-500 mr-2">✓</span>
-                    <div>
-                      <strong className="text-gray-800">
-                        Marketing Materials:
-                      </strong>{" "}
-                      Brochures, banners, digital assets, and social media
-                      templates
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-yellow-500 mr-2">✓</span>
-                    <div>
-                      <strong className="text-gray-800">
-                        Technology Support:
-                      </strong>{" "}
-                      CRM system, inventory management, and business analytics
-                    </div>
-                  </li>
-                </ul>
+                {renderRichContent(franchiseSP?.benefits)}
               </div>
             </motion.div>
 
@@ -247,42 +394,7 @@ const FranchisePage = () => {
                 <h3 className="text-xl font-semibold mb-4 text-gray-800">
                   Financial Benefits
                 </h3>
-                <ul className="space-y-4 text-gray-600">
-                  <li className="flex items-start">
-                    <span className="text-yellow-500 mr-2">✓</span>
-                    <div>
-                      <strong className="text-gray-800">Attractive ROI:</strong>{" "}
-                      Average break-even in 10-12 months
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-yellow-500 mr-2">✓</span>
-                    <div>
-                      <strong className="text-gray-800">
-                        Margin Structure:
-                      </strong>{" "}
-                      25-35% margins on premium products
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-yellow-500 mr-2">✓</span>
-                    <div>
-                      <strong className="text-gray-800">
-                        Territorial Rights:
-                      </strong>{" "}
-                      Exclusive territory protection
-                    </div>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-yellow-500 mr-2">✓</span>
-                    <div>
-                      <strong className="text-gray-800">
-                        Volume Discounts:
-                      </strong>{" "}
-                      Higher purchase volumes = better margins
-                    </div>
-                  </li>
-                </ul>
+                {renderRichContent(franchiseSP?.support)}
               </div>
             </motion.div>
           </motion.div>
@@ -309,7 +421,7 @@ const FranchisePage = () => {
           className="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto"
         >
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {availableCities.map((city, index) => (
+            {franchiseSP.expansion_cities?.map((city, index) => (
               <div
                 key={index}
                 className="bg-gray-50 p-3 rounded-md text-center"
@@ -328,49 +440,51 @@ const FranchisePage = () => {
       </motion.section>
 
       {/* Testimonials Section */}
-      {franchiseTestimonials.length > 0 && (
-        <motion.section
-          className="mb-20 py-12 bg-yellow-50 rounded-xl"
-          variants={fadeIn("up", "spring", 0.4, 1)}
-        >
-          <div className="max-w-4xl mx-auto px-8">
-            <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
-              What Our Franchisees Say
-            </h2>
-            <div className="grid md:grid-cols-2 gap-8">
-              {franchiseTestimonials.map((testimonial, index) => (
-                <motion.div
-                  key={index}
-                  variants={fadeIn("up", "spring", index * 0.2, 1)}
-                  className="bg-white p-6 rounded-lg shadow-sm"
-                >
-                  <div className="flex mb-4">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <svg
-                        key={i}
-                        className="w-5 h-5 text-yellow-500"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <p className="text-gray-600 italic mb-4">
-                    "{testimonial.quote}"
-                  </p>
-                  <p className="font-semibold text-gray-800">
-                    {testimonial.name}
-                  </p>
-                  <p className="text-gray-500 text-sm">
-                    {testimonial.location}
-                  </p>
-                </motion.div>
-              ))}
-            </div>
+      {/* {franchiseTestimonials.length > 0 && ( */}
+      <motion.section
+        className="mb-20 py-12 bg-yellow-50 rounded-xl"
+        variants={fadeIn("up", "spring", 0.4, 1)}
+      >
+        <div className="max-w-4xl mx-auto px-8">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-12">
+            What Our Franchisees Say
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <motion.div
+                key={index}
+                variants={fadeIn("up", "spring", index * 0.2, 1)}
+                initial="hidden"
+                animate="show"
+                className="bg-white p-6 rounded-lg shadow-sm"
+              >
+                <div className="flex mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <svg
+                      key={i}
+                      className="w-5 h-5 text-yellow-500"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  ))}
+                </div>
+                <p className="text-gray-600 italic mb-4">
+                  "{testimonial.quote}"
+                </p>
+                <p className="font-semibold text-gray-800">
+                  {testimonial.name}
+                </p>
+                <p className="text-gray-500 text-sm">
+                  {testimonial.location}
+                </p>
+              </motion.div>
+            ))}
           </div>
-        </motion.section>
-      )}
+        </div>
+      </motion.section>
+      {/* )} */}
 
       {/* Application Section */}
       <motion.section
@@ -392,7 +506,7 @@ const FranchisePage = () => {
           variants={fadeIn("up", "spring", 0.3, 1)}
         >
           <div className="p-8 md:p-12">
-            <form className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label
@@ -404,6 +518,9 @@ const FranchisePage = () => {
                   <input
                     type="text"
                     id="firstName"
+                    name="first_name"
+                    value={formData.first_name}
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                     required
                   />
@@ -419,6 +536,9 @@ const FranchisePage = () => {
                   <input
                     type="text"
                     id="lastName"
+                    name="last_name"
+                    value={formData.last_name}
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                     required
                   />
@@ -436,6 +556,9 @@ const FranchisePage = () => {
                   <input
                     type="email"
                     id="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                     required
                   />
@@ -451,6 +574,9 @@ const FranchisePage = () => {
                   <input
                     type="tel"
                     id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                     required
                   />
@@ -467,15 +593,18 @@ const FranchisePage = () => {
                 <input
                   type="text"
                   id="city"
+                  name="preferred_city"
+                  value={formData.preferred_city}
+                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                   required
                   list="citiesList"
                 />
-                <datalist id="citiesList">
+                {/* <datalist id="citiesList">
                   {availableCities.map((city, index) => (
                     <option key={index} value={city} />
                   ))}
-                </datalist>
+                </datalist> */}
               </div>
 
               <div>
@@ -487,15 +616,18 @@ const FranchisePage = () => {
                 </label>
                 <select
                   id="investment"
+                  name="investment_capacity"
+                  value={formData.investment_capacity}
+                  onChange={handleChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                   required
                 >
                   <option value="">Select range</option>
-                  <option value="10-20">₹10-20 Lakhs</option>
-                  <option value="20-30">₹20-30 Lakhs</option>
-                  <option value="30-40">₹30-40 Lakhs</option>
-                  <option value="40-50">₹40-50 Lakhs</option>
-                  <option value="50+">₹50+ Lakhs</option>
+                  <option value='10-20 lakhs'>₹10-20 Lakhs</option>
+                  <option value="20-30 lakhs">₹20-30 Lakhs</option>
+                  <option value="30-40 lakhs">₹30-40 Lakhs</option>
+                  <option value="40-50 lakhs">₹40-50 Lakhs</option>
+                  <option value="50+ lakhs">₹50+ Lakhs</option>
                 </select>
               </div>
 
@@ -508,6 +640,9 @@ const FranchisePage = () => {
                 </label>
                 <textarea
                   id="experience"
+                  name="business_experience"
+                  value={formData.business_experience}
+                  onChange={handleChange}
                   rows={3}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-yellow-500 focus:border-yellow-500"
                   placeholder="Describe your experience in construction, retail, or related fields"
@@ -519,6 +654,9 @@ const FranchisePage = () => {
                 <label className="flex items-start">
                   <input
                     type="checkbox"
+                    name="consent_marketing"
+                    checked={formData.consent_marketing}
+                    onChange={handleChange}
                     className="mt-1 mr-2 rounded text-yellow-500 focus:ring-yellow-500"
                     required
                   />
@@ -531,11 +669,78 @@ const FranchisePage = () => {
 
               <button
                 type="submit"
-                className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-3 px-4 rounded-md transition-colors"
+                disabled={submitStatus === 'submitting'}
+                className={`w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-3 px-4 rounded-md transition-colors ${submitStatus === 'submitting' ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
               >
-                Submit Franchise Application
+                {submitStatus === 'submitting' ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  'Submit Franchise Application'
+                )}
               </button>
             </form>
+            {/* Form Submission Messages */}
+            <div className="mt-4">
+              {submitStatus === 'submitting' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center p-4 bg-blue-50 rounded-md"
+                >
+                  <svg className="w-5 h-5 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span className="text-blue-700">Submitting your request...</span>
+                </motion.div>
+              )}
+
+              {submitStatus === 'success' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center p-4 bg-green-50 rounded-md"
+                >
+                  <svg className="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                  </svg>
+                  <div>
+                    <p className="font-medium text-green-700">Thank you for your application!</p>
+                    <p className="text-sm text-green-600 mt-1">We've received your franchise application and will contact you shortly.</p>
+                  </div>
+                </motion.div>
+              )}
+
+              {submitStatus === 'error' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 bg-red-50 rounded-md"
+                >
+                  <div className="flex items-start">
+                    <svg className="w-5 h-5 text-red-500 mr-3 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>
+                      <p className="font-medium text-red-700">There was an error submitting your form</p>
+                      <p className="text-sm text-red-600 mt-1">{submitError || 'Please try again later.'}</p>
+                      <button
+                        onClick={() => setSubmitStatus(null)}
+                        className="mt-2 text-sm font-medium text-red-600 hover:text-red-700 focus:outline-none"
+                      >
+                        Try again →
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </div>
           </div>
         </motion.div>
 

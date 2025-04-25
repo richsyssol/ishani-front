@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -8,15 +9,22 @@ import {
   FiMessageSquare,
 } from "react-icons/fi";
 
-// Data imports
-import { categoryIcons, products } from "../../constants/productData";
-import { testimonials, faqs, benefits } from "../../constants/contentData";
-
 const ProductsPage = () => {
   const { category } = useParams();
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState(category || "All");
   const [activeFAQ, setActiveFAQ] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // State for all data
+  const [data, setData] = useState({
+    products: [],
+    categories: [],
+    testimonials: [],
+    faqs: [],
+    categoryIcons: {} // Added categoryIcons to the main state
+  });
 
   // Path to category mapping
   const pathToCategoryMap = {
@@ -26,70 +34,133 @@ const ProductsPage = () => {
     "custom-designs": "Custom Design Options",
   };
 
+  // Fetch all data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch all data in parallel
+        const [productsRes, categoriesRes, testimonialsRes, faqsRes] =
+          await Promise.all([
+            axios.get('http://localhost:8000/api/products'),
+            axios.get('http://localhost:8000/api/categories'),
+            axios.get('http://localhost:8000/api/testimonials'),
+            axios.get('http://localhost:8000/api/faqs'),
+          ]);
+
+        // Create category icons mapping from categories data
+        const categoryIcons = {};
+        categoriesRes.data.data.forEach(cat => {
+          categoryIcons[cat.name] = cat.icon;
+        });
+
+        setData({
+          products: productsRes.data.data,
+          categories: categoriesRes.data.data,
+          testimonials: testimonialsRes.data.data,
+          faqs: faqsRes.data.data,
+          categoryIcons: categoryIcons // Store in state
+        });
+
+      } catch (err) {
+        setError(err.message || "Failed to fetch data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   // Set initial filter based on URL
-  React.useEffect(() => {
+  useEffect(() => {
     if (category && pathToCategoryMap[category]) {
       setActiveFilter(pathToCategoryMap[category]);
     }
   }, [category]);
 
   // Filter products
-  const filteredProducts =
-    activeFilter === "All"
-      ? products
-      : products.filter((product) => product.category === activeFilter);
+  const filteredProducts = activeFilter === "All"
+    ? data.products
+: data.products.filter(product => {
+      const productCategory = data.categories.find(cat => cat.id === product.category_id);
+      return productCategory?.name === activeFilter;
+    });
+
+  // Group benefits by category
+  // const groupedBenefits = data.benefits.reduce((acc, benefit) => {
+  //   const key = benefit.category_id ?
+  //     data.categories.find(cat => cat.id === benefit.category_id)?.name : 'default';
+  //   if (!acc[key]) acc[key] = [];
+  //   acc[key].push(benefit);
+  //   return acc;
+  // }, {});
 
   // Toggle FAQ
   const toggleFAQ = (index) => {
     setActiveFAQ(activeFAQ === index ? null : index);
   };
 
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorDisplay message={error} />;
+
   return (
     <section className="bg-white mt-20">
-      {/* Main Product Section */}
       <div className="max-w-7xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
         {/* Breadcrumbs */}
         <Breadcrumbs
           category={category}
           navigate={navigate}
-          pathToCategoryMap={pathToCategoryMap}
+          categories={data.categories}
         />
 
-        {/* Category Header */}
+        {/* Dynamic Category Header */}
         <CategoryHeader
           category={category}
           activeFilter={activeFilter}
-          pathToCategoryMap={pathToCategoryMap}
+          categories={data.categories}
+          filteredProducts={filteredProducts}  // Pass filteredProducts here
         />
 
-        {/* Category Filters (for All Products) */}
+        {/* Dynamic Category Filters */}
         {!category && (
           <CategoryFilters
-            pathToCategoryMap={pathToCategoryMap}
             activeFilter={activeFilter}
+            setActiveFilter={setActiveFilter}
             navigate={navigate}
+            categories={data.categories}
           />
         )}
 
         {/* Category Benefits */}
         {category && (
-          <CategoryBenefits category={activeFilter} benefits={benefits} />
+          <CategoryBenefits
+            category={activeFilter}
+            benefits={data.benefits}
+            categories={data.categories}
+          />
         )}
 
         {/* Product Grid */}
         <ProductGrid
           filteredProducts={filteredProducts}
-          categoryIcons={categoryIcons}
+          categories={data.categories}
+          categoryIcons={data.categoryIcons}
         />
 
         {/* Common: Why Choose Us Section */}
         <WhyChooseUs />
 
         {/* Common: Testimonials */}
-        <TestimonialsSection testimonials={testimonials} />
+        <TestimonialsSection testimonials={data.testimonials} />
 
         {/* Common: FAQ */}
-        <FAQSection faqs={faqs} activeFAQ={activeFAQ} toggleFAQ={toggleFAQ} />
+        <FAQSection
+          faqs={data.faqs}
+          activeFAQ={activeFAQ}
+          toggleFAQ={toggleFAQ}
+        />
 
         {/* Common: CTA */}
         <CTASection />
@@ -98,56 +169,80 @@ const ProductsPage = () => {
   );
 };
 
-// Component: Breadcrumbs
-const Breadcrumbs = ({ category, navigate, pathToCategoryMap }) => (
-  <div className="flex items-center mb-6">
-    <button
-      onClick={() => navigate(-1)}
-      className="flex items-center text-yellow-600 hover:text-yellow-700 mr-4"
-    >
-      <FiArrowLeft className="mr-1" /> Back
-    </button>
-    <nav className="text-sm text-gray-600">
-      <span
-        className="hover:text-yellow-600 cursor-pointer"
-        onClick={() => navigate("/")}
-      >
-        Home
-      </span>
-      <span className="mx-2">/</span>
-      <span
-        className="hover:text-yellow-600 cursor-pointer"
-        onClick={() => navigate("/products")}
-      >
-        Products
-      </span>
-      {category && (
-        <>
-          <span className="mx-2">/</span>
-          <span className="text-yellow-600 capitalize">
-            {category.replace(/-/g, " ")}
-          </span>
-        </>
-      )}
-    </nav>
+// Loading Spinner Component
+const LoadingSpinner = () => (
+  <div className="flex justify-center items-center h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-500"></div>
   </div>
 );
+
+// Error Display Component
+const ErrorDisplay = ({ message }) => (
+  <div className="bg-red-50 border-l-4 border-red-500 p-4 max-w-3xl mx-auto mt-10">
+    <div className="flex">
+      <div className="flex-shrink-0">
+        <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+        </svg>
+      </div>
+      <div className="ml-3">
+        <p className="text-sm text-red-700">
+          {message || 'An error occurred while loading data.'}
+        </p>
+      </div>
+    </div>
+  </div>
+);
+
+// Component: Breadcrumbs
+const Breadcrumbs = ({ category, navigate, categories }) => {
+  // Generate path map dynamically from categories
+  const pathToCategoryMap = categories.reduce((acc, cat) => {
+    const path = cat.name.toLowerCase().replace(/\s+/g, '-');
+    acc[path] = cat.name;
+    return acc;
+  }, {});
+  return (
+    <div className="flex items-center mb-6">
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center text-yellow-600 hover:text-yellow-700 mr-4"
+      >
+        <FiArrowLeft className="mr-1" /> Back
+      </button>
+      <nav className="text-sm text-gray-600">
+        <span
+          className="hover:text-yellow-600 cursor-pointer"
+          onClick={() => navigate("/")}
+        >
+          Home
+        </span>
+        <span className="mx-2">/</span>
+        <span
+          className="hover:text-yellow-600 cursor-pointer"
+          onClick={() => navigate("/products")}
+        >
+          Products
+        </span>
+        {category && (
+          <>
+            <span className="mx-2">/</span>
+            <span className="text-yellow-600">
+              {pathToCategoryMap[category] || category.replace(/-/g, " ")}
+            </span>
+          </>
+        )}
+      </nav>
+    </div>
+  );
+};
+
 // Component: Category Header
-const CategoryHeader = ({ category, activeFilter, pathToCategoryMap }) => {
-  // Safely get the category name
-  const categoryName = category
-    ? pathToCategoryMap[category] || "Products"
-    : "Premium Door Solutions";
-
-  // Safely get the description
-  const description = getCategoryDescription(activeFilter || categoryName);
-
-  // Safely get the stats text
-  const statsText = category
-    ? `Browse our ${categoryName.toLowerCase()} collection - ${getCategoryStats(
-        activeFilter || categoryName
-      )} products available`
-    : "Trusted by 5000+ homeowners across India since 2010";
+const CategoryHeader = ({ category, activeFilter, categories, filteredProducts }) => {
+  // Find current category details
+  const currentCategory = categories.find(cat =>
+    cat.name === (activeFilter || category?.replace(/-/g, " "))
+  ) || {};
 
   return (
     <motion.div
@@ -156,81 +251,115 @@ const CategoryHeader = ({ category, activeFilter, pathToCategoryMap }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      <h2 className="text-4xl font-bold text-gray-800 mb-3">{categoryName}</h2>
+      <h2 className="text-4xl font-bold text-gray-800 mb-3">
+        {currentCategory.name || "Premium Door Solutions"}
+      </h2>
       <motion.div
         className="h-1 w-16 bg-yellow-500 mb-6"
         initial={{ width: 0 }}
         animate={{ width: "4rem" }}
         transition={{ duration: 0.5, delay: 0.3 }}
       />
-      <p className="text-gray-600 max-w-2xl mb-4">{description}</p>
-      <p className="text-gray-500 text-sm">{statsText}</p>
+      <p className="text-gray-600 max-w-2xl mb-4">
+        {currentCategory?.description || "Premium quality products for Indian homes"}
+      </p>
+      <p className="text-gray-500 text-sm">
+        {category
+          ? (currentCategory?.collection_text_template
+            ? currentCategory.collection_text_template
+              .replace('{category}', currentCategory.name?.toLowerCase())
+              .replace('{count}', filteredProducts.length)
+              .replace('{descriptor}', currentCategory.product_descriptor)
+            : `Browse our ${currentCategory.name?.toLowerCase()} collection`
+          )
+          : (currentCategory?.homepage_text || "Trusted by 5000+ homeowners across India since 2010")
+        }
+      </p>
     </motion.div>
   );
 };
 
 // Component: Category Filters
-const CategoryFilters = ({ pathToCategoryMap, activeFilter, navigate }) => (
-  <motion.div
-    className="flex flex-wrap gap-3 mb-10"
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    transition={{ delay: 0.4 }}
-  >
-    {Object.keys(pathToCategoryMap).map((path) => {
-      const cat = pathToCategoryMap[path];
-      return (
+const CategoryFilters = ({ activeFilter, setActiveFilter, navigate, categories }) => {
+  // Generate path map dynamically
+  const pathToCategoryMap = categories.reduce((acc, cat) => {
+    const path = cat.name.toLowerCase().replace(/\s+/g, '-');
+    acc[path] = cat.name;
+    return acc;
+  }, {});
+
+  return (
+    <motion.div
+      className="flex flex-wrap gap-3 mb-10"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.4 }}
+    >
+      {Object.entries(pathToCategoryMap).map(([path, catName]) => (
         <button
           key={path}
-          onClick={() => navigate(`/products/${path}`)}
-          className={`px-4 py-2 rounded-full transition-all ${
-            activeFilter === cat
+          onClick={() => {
+            setActiveFilter(catName);
+            navigate(`/products/${path}`);
+          }}
+          className={`px-4 py-2 rounded-full transition-all ${activeFilter === catName
               ? "bg-yellow-500 text-white shadow-md"
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-          }`}
+            }`}
         >
-          {cat}
+          {catName}
         </button>
-      );
-    })}
-    <button
-      onClick={() => {
-        setActiveFilter("All");
-        navigate("/products");
-      }}
-      className={`px-4 py-2 rounded-full transition-all ${
-        activeFilter === "All"
-          ? "bg-yellow-500 text-white shadow-md"
-          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-      }`}
-    >
-      View All
-    </button>
-  </motion.div>
-);
+      ))}
+      <button
+        onClick={() => {
+          setActiveFilter("All");
+          navigate("/products");
+        }}
+        className={`px-4 py-2 rounded-full transition-all ${activeFilter === "All"
+            ? "bg-yellow-500 text-white shadow-md"
+            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+          }`}
+      >
+        View All
+      </button>
+    </motion.div>
+  );
+};
 
 // Component: Category Benefits
-const CategoryBenefits = ({ category, benefits }) => (
-  <div className="mb-12 bg-gray-50 p-6 rounded-lg">
-    <h3 className="text-xl font-semibold mb-4 text-gray-800">
-      Why Choose Our {category}?
-    </h3>
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {(benefits[category] || benefits.default).map((benefit, index) => (
-        <div key={index} className="flex items-start">
-          <div className="text-yellow-500 mr-3 mt-1">✓</div>
-          <div>
-            <h4 className="font-medium text-gray-800">{benefit.title}</h4>
-            <p className="text-gray-600 text-sm">{benefit.description}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
+const CategoryBenefits = ({ category, categories }) => {
+  // Find the current category with its effective benefits from backend
+  const currentCategory = categories.find(c => c.name === category);
+  
+  // Benefits will be either custom or default (already determined by backend)
+  const benefits = currentCategory?.benefits || [];
 
-// Component: Product Grid
-const ProductGrid = ({ filteredProducts, categoryIcons }) => (
+  return (
+    <div className="mb-12 bg-gray-50 p-6 rounded-lg">
+      <h3 className="text-xl font-semibold mb-4 text-gray-800">
+        Why Choose Our {category}?
+      </h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {benefits.map((benefit, index) => (
+          <div key={index} className="flex items-start">
+            <div className="text-yellow-500 mr-3 mt-1">
+              {benefit.icon || "✓"}
+            </div>
+            <div>
+              <h4 className="font-medium text-gray-800">{benefit.title}</h4>
+              {benefit.description && (
+                <p className="text-gray-600 text-sm">{benefit.description}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Update ProductGrid to pass categoryIcons
+const ProductGrid = ({ filteredProducts, categories, categoryIcons }) => (
   <motion.div
     className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"
     initial="hidden"
@@ -249,6 +378,7 @@ const ProductGrid = ({ filteredProducts, categoryIcons }) => (
       <ProductCard
         key={product.id}
         product={product}
+        categories={categories}
         categoryIcons={categoryIcons}
       />
     ))}
@@ -256,44 +386,50 @@ const ProductGrid = ({ filteredProducts, categoryIcons }) => (
 );
 
 // Component: Product Card
-const ProductCard = ({ product, categoryIcons }) => (
-  <motion.div
-    variants={{
-      hidden: { opacity: 0, y: 20 },
-      show: { opacity: 1, y: 0 },
-    }}
-    whileHover={{
-      y: -5,
-      boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
-    }}
-    className="bg-white rounded-xl overflow-hidden border border-gray-100 transition-all"
-  >
-    <div className="relative h-48 overflow-hidden">
-      <img
-        src={product.image}
-        alt={product.title}
-        className="w-full h-full object-cover transition-transform hover:scale-105"
-        loading="lazy"
-      />
-      <span className="absolute top-3 right-3 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
-        {product.price}
-      </span>
-    </div>
-    <div className="p-5">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-lg">{categoryIcons[product.category]}</span>
-        <span className="text-sm font-medium text-yellow-600">
-          {product.category}
+const ProductCard = ({ product, categories, categoryIcons }) => {
+  const category = categories.find(cat => cat.id === product.category_id);
+
+  return (
+    <motion.div
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        show: { opacity: 1, y: 0 },
+      }}
+      whileHover={{
+        y: -5,
+        boxShadow: "0 10px 25px -5px rgba(0,0,0,0.1)",
+      }}
+      className="bg-white rounded-xl overflow-hidden border border-gray-100 transition-all"
+    >
+      <div className="relative h-48 overflow-hidden">
+        <img
+          src={`${import.meta.env.VITE_PUBLIC_IMAGE_PATH}/${product.image}`}
+          alt={product.title}
+          className="w-full h-full object-cover transition-transform hover:scale-105"
+          loading="lazy"
+        />
+        <span className="absolute top-3 right-3 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
+          ₹{product.price.toLocaleString()}
         </span>
       </div>
-      <h3 className="text-xl font-bold text-gray-800 mb-2">{product.title}</h3>
-      <p className="text-gray-600 mb-4">{product.description}</p>
-      <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition">
-        Enquire Now
-      </button>
-    </div>
-  </motion.div>
-);
+      <div className="p-5">
+        {category && (
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-lg">{categoryIcons[category.name]}</span>
+            <span className="text-sm font-medium text-yellow-600">
+              {category.name}
+            </span>
+          </div>
+        )}
+        <h3 className="text-xl font-bold text-gray-800 mb-2">{product.title}</h3>
+        <p className="text-gray-600 mb-4">{product.description}</p>
+        <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded-lg transition">
+          Enquire Now
+        </button>
+      </div>
+    </motion.div>
+  );
+};
 
 // Component: Why Choose Us
 const WhyChooseUs = () => (
@@ -423,14 +559,14 @@ function getCategoryDescription(category) {
   return descriptions[category] || "Premium quality products for Indian homes";
 }
 
-function getCategoryStats(category) {
-  const stats = {
-    "uPVC French Doors": "6 premium",
-    "Aluminum French Doors": "5 durable",
-    "Sliding & Folding Doors": "5 space-saving",
-    "Custom Design Options": "4 bespoke",
-  };
-  return stats[category] || "multiple";
-}
+// function getCategoryStats(category) {
+//   const stats = {
+//     "uPVC French Doors": "6 premium",
+//     "Aluminum French Doors": "5 durable",
+//     "Sliding & Folding Doors": "5 space-saving",
+//     "Custom Design Options": "4 bespoke",
+//   };
+//   return stats[category] || "multiple";
+// }
 
 export default ProductsPage;

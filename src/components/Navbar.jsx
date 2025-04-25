@@ -1,11 +1,42 @@
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { Menu, X, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import ContentWrapper from "./ContentWrapper/ContentWrapper";
 import { navlogo } from "../../public/assets";
 
-const navItems = [
+
+
+const Navbar = () => {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [hideTopBar, setHideTopBar] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/api/categories');
+        setCategories(response.data.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleDropdown = (index) =>
+    setOpenDropdown(openDropdown === index ? null : index);
+
+  const navItems = [
   { label: "HOME", path: "/" },
   {
     label: "ABOUT US",
@@ -19,17 +50,12 @@ const navItems = [
   {
     label: "PRODUCTS",
     submenu: [
-      { label: "uPVC French Doors", path: "/products/upvc-french-doors" },
-      {
-        label: "Aluminum French Doors",
-        path: "/products/aluminum-french-doors",
-      },
-      {
-        label: "Sliding & Folding Doors",
-        path: "/products/sliding-folding-doors",
-      },
-      { label: "Custom Designs", path: "/products/custom-designs" },
-      { label: "All Products", path: "/products" },
+        ...(categories.map(category => ({
+          label: category.name,
+          path: `/products/${category.slug}`,
+          icon: category.icon
+        }))),
+        { label: "All Products", path: "/products" }
     ],
   },
   {
@@ -72,16 +98,6 @@ const navItems = [
   },
   { label: "CONTACT US", path: "/contactus" },
 ];
-
-const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const [hideTopBar, setHideTopBar] = useState(false);
-  const navigate = useNavigate();
-
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-  const toggleDropdown = (index) =>
-    setOpenDropdown(openDropdown === index ? null : index);
 
   useEffect(() => {
     const handleScroll = () => {
