@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaFacebookF, FaTwitter, FaYoutube, FaInstagram } from "react-icons/fa";
 import { MdOutlineEmail } from "react-icons/md";
 import { IoLocationOutline, IoCallOutline } from "react-icons/io5";
 import { motion } from "framer-motion";
 import { navlogo } from "../../public/assets";
+import axiosInstance from "../services/api";
 
 const Footer = () => {
   const socialIcons = [
@@ -13,6 +14,63 @@ const Footer = () => {
     { icon: FaInstagram, label: "Instagram" },
   ];
 
+  const [contactData, setContactData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axiosInstance.get("/contact");
+        // console.log(response);
+        setContactData(response.data);
+      } catch (error) {
+        console.error("Error fetching contact information:", error);
+        setContactData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-[600px] md:h-[700px] flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <motion.div
+            className="flex justify-center mb-6"
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 2,
+              ease: "linear",
+              repeat: Infinity,
+            }}
+          >
+            <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+          </motion.div>
+          <motion.h2
+            className="text-2xl font-semibold text-gray-700"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            Loading...
+          </motion.h2>
+          <motion.p
+            className="text-gray-500 mt-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            Preparing your experience
+          </motion.p>
+        </div>
+      </div>
+    );
+  }
   return (
     <motion.footer
       initial={{ opacity: 0, y: 50 }}
@@ -42,25 +100,26 @@ const Footer = () => {
           <ul className="text-sm text-gray-700 space-y-3">
             <li className="flex items-start gap-2">
               <IoLocationOutline size={20} className="text-yellow-500 mt-1" />
-              <span>
-                <strong>Corp. Office:</strong>
+              <address className="text-gray-600 not-italic ">
+                {contactData?.corporate_address_line1 || ""}
                 <br />
-                Ishani Enterprises
+                {contactData?.corporate_address_line2 || ""}
                 <br />
-                G-8, Prestige Bytco Business Center,
+                {contactData?.corporate_address_line3 || ""}
                 <br />
-                Bytco Point, Nasik Road,
+                {contactData?.corporate_address_line4 || ""}
                 <br />
-                Nasik - 422101
-              </span>
+                {contactData?.corporate_address_line5 || ""}
+              </address>
             </li>
             <li className="flex items-center gap-2">
               <MdOutlineEmail size={20} className="text-yellow-500" />
-              ishanient@gmail.com
+              {contactData?.email || ""}
             </li>
             <li className="flex items-center gap-2">
               <IoCallOutline size={20} className="text-yellow-500" />
-              +91 253 2465140 | +91 94222 55572
+              {contactData?.tel_number || ""} |{" "}
+              {contactData?.mobile_number || ""}
             </li>
           </ul>
         </motion.div>

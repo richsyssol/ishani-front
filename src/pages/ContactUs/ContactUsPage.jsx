@@ -1,6 +1,5 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { motion } from "framer-motion";
 import { fadeIn, staggerContainer, zoomIn } from "../../utils/motion";
 import {
@@ -16,6 +15,7 @@ import {
   IoCallOutline,
   IoStorefrontOutline,
 } from "react-icons/io5";
+import axiosInstance from "../../services/api";
 
 const ContactUsPage = () => {
   const socialIcons = [
@@ -32,12 +32,11 @@ const ContactUsPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get("http://localhost:8000/api/contact");
-        console.log(response);
-        setContactData(response.data || null);
+        const response = await axiosInstance.get("/contact");
+        // console.log(response);
+        setContactData(response.data);
       } catch (error) {
         console.error("Error fetching contact information:", error);
-        setContactData(null);
       } finally {
         setLoading(false);
       }
@@ -48,8 +47,38 @@ const ContactUsPage = () => {
 
   if (loading) {
     return (
-      <div className="h-[600px] flex items-center justify-center text-gray-500">
-        Loading...
+      <div className="h-[600px] md:h-[700px] flex items-center justify-center bg-gray-100">
+        <div className="text-center">
+          <motion.div
+            className="flex justify-center mb-6"
+            animate={{
+              rotate: 360,
+            }}
+            transition={{
+              duration: 2,
+              ease: "linear",
+              repeat: Infinity,
+            }}
+          >
+            <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+          </motion.div>
+          <motion.h2
+            className="text-2xl font-semibold text-gray-700"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            Loading...
+          </motion.h2>
+          <motion.p
+            className="text-gray-500 mt-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            Preparing your experience
+          </motion.p>
+        </div>
       </div>
     );
   }
@@ -190,10 +219,10 @@ const ContactUsPage = () => {
                 <div>
                   <h3 className="font-semibold text-gray-800">Phone</h3>
                   <p className="text-gray-600">
-                    {contactData?.tel_number || "Not provided"}
+                    {contactData?.tel_number || ""}
                   </p>
                   <p className="text-gray-600">
-                    {contactData?.mobile_number || "Not provided"}
+                    {contactData?.mobile_number || ""}
                   </p>
                 </div>
               </div>
@@ -202,9 +231,7 @@ const ContactUsPage = () => {
                 <MdOutlineEmail size={24} className="text-yellow-500 mt-1" />
                 <div>
                   <h3 className="font-semibold text-gray-800">Email</h3>
-                  <p className="text-gray-600">
-                    {contactData?.email || "Not provided"}
-                  </p>
+                  <p className="text-gray-600">{contactData?.email || ""}</p>
                 </div>
               </div>
 
@@ -213,7 +240,7 @@ const ContactUsPage = () => {
                 <div>
                   <h3 className="font-semibold text-gray-800">WhatsApp</h3>
                   <p className="text-gray-600">
-                    {contactData?.whatsapp_number || "Not provided"}
+                    {contactData?.whatsapp_number || ""}
                   </p>
                 </div>
               </div>
@@ -250,15 +277,15 @@ const ContactUsPage = () => {
                 </h3>
               </div>
               <address className="text-gray-600 not-italic pl-9">
-                {contactData?.corporate_address_line1 || "Not provided"}
+                {contactData?.corporate_address_line1 || ""}
                 <br />
-                {contactData?.corporate_address_line2 || "Not provided"}
+                {contactData?.corporate_address_line2 || ""}
                 <br />
-                {contactData?.corporate_address_line3 || "Not provided"}
+                {contactData?.corporate_address_line3 || ""}
                 <br />
-                {contactData?.corporate_address_line4 || "Not provided"}
+                {contactData?.corporate_address_line4 || ""}
                 <br />
-                {contactData?.corporate_address_line5 || "Not provided"}
+                {contactData?.corporate_address_line5 || ""}
               </address>
             </div>
 
@@ -270,15 +297,15 @@ const ContactUsPage = () => {
                 </h3>
               </div>
               <address className="text-gray-600 not-italic pl-9">
-                {contactData?.factory_address_line1 || "Not provided"}
+                {contactData?.factory_address_line1 || ""}
                 <br />
-                {contactData?.factory_address_line2 || "Not provided"}
+                {contactData?.factory_address_line2 || ""}
                 <br />
-                {contactData?.factory_address_line3 || "Not provided"}
+                {contactData?.factory_address_line3 || ""}
                 <br />
-                {contactData?.factory_address_line4 || "Not provided"}
+                {contactData?.factory_address_line4 || ""}
                 <br />
-                {contactData?.factory_address_line5 || "Not provided"}
+                {contactData?.factory_address_line5 || ""}
               </address>
             </div>
 
@@ -290,15 +317,15 @@ const ContactUsPage = () => {
                 </h3>
               </div>
               <address className="text-gray-600 not-italic pl-9">
-                {contactData?.outlet_address_line1 || "Not provided"}
+                {contactData?.outlet_address_line1 || ""}
                 <br />
-                {contactData?.outlet_address_line2 || "Not provided"}
+                {contactData?.outlet_address_line2 || ""}
                 <br />
-                {contactData?.outlet_address_line3 || "Not provided"}
+                {contactData?.outlet_address_line3 || ""}
                 <br />
-                {contactData?.outlet_address_line4 || "Not provided"}
+                {contactData?.outlet_address_line4 || ""}
                 <br />
-                {contactData?.outlet_address_line5 || "Not provided"}
+                {contactData?.outlet_address_line5 || ""}
               </address>
             </div>
           </div>

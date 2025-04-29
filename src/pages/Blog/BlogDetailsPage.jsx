@@ -20,8 +20,8 @@ const BlogDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = "http://127.0.0.1:8000/api";
-  const STORAGE_URL = "http://127.0.0.1:8000/storage";
+  const API_BASE_URL = "http://localhost:8000/api";
+  const STORAGE_URL = "http://localhost:8000/api/uploads";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -30,8 +30,8 @@ const BlogDetailsPage = () => {
           axios.get(`${API_BASE_URL}/blog/${slug}`),
           axios.get(`${API_BASE_URL}/blog/recent`),
         ]);
-
-        setBlog(postRes.data);
+        console.log(postRes.data.post);
+        setBlog(postRes.data.post);
         setRecentPosts(recentRes.data.filter((post) => post.slug !== slug));
       } catch (err) {
         setError(err.message || "Failed to load blog post");
